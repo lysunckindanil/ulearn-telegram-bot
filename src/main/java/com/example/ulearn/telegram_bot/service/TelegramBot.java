@@ -3,8 +3,11 @@ package com.example.ulearn.telegram_bot.service;
 import com.example.ulearn.generator.Block;
 import com.example.ulearn.generator.CodeUnit;
 import com.example.ulearn.telegram_bot.config.BotConfig;
+import com.example.ulearn.telegram_bot.model.Payment;
+import com.example.ulearn.telegram_bot.model.PaymentRepository;
 import com.example.ulearn.telegram_bot.model.User;
 import com.example.ulearn.telegram_bot.model.UserRepository;
+import com.example.ulearn.telegram_bot.service.bot_tools.PaymentTools;
 import com.vdurmont.emoji.EmojiParser;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
@@ -24,8 +27,7 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import java.io.File;
 import java.util.*;
 
-import static com.example.ulearn.telegram_bot.service.bot_tools.PaymentTools.checkPaymentStatusLoop;
-import static com.example.ulearn.telegram_bot.service.bot_tools.PaymentTools.getUrlJson;
+import static com.example.ulearn.telegram_bot.service.bot_tools.PaymentTools.*;
 import static com.example.ulearn.telegram_bot.service.bot_tools.QuestionsTools.sendQuestions;
 import static com.example.ulearn.telegram_bot.service.bot_tools.RegisterTools.registerUserAllBlocks;
 import static com.example.ulearn.telegram_bot.service.bot_tools.RegisterTools.registerUserBlock;
@@ -37,12 +39,18 @@ public class TelegramBot extends TelegramLongPollingBot {
     private final BotConfig config;
     private final UserRepository users;
     private final BotResources source;
+    private final PaymentRepository paymentRepository;
+
+    private final PaymentTools paymentTools;
 
     @Autowired
-    public TelegramBot(BotConfig config, UserRepository userRepository, BotResources source) {
+    public TelegramBot(BotConfig config, UserRepository userRepository, BotResources source, PaymentRepository paymentRepository, PaymentTools paymentTools) {
         this.config = config;
         this.users = userRepository;
         this.source = source;
+        this.paymentRepository = paymentRepository;
+        this.paymentTools = paymentTools;
+        paymentTools.restorePayments(this);
         List<BotCommand> listOfCommands = new ArrayList<>();
         listOfCommands.add(new BotCommand("/show", "Показать купленные блоки"));
         listOfCommands.add(new BotCommand("/buy", "Купить блоки"));
@@ -139,6 +147,14 @@ public class TelegramBot extends TelegramLongPollingBot {
             sendMessage(this, editMessageText, message);
 
             // process of checking whether payment paid or not
+            Payment payment = new Payment();
+            payment.setId(id);
+            payment.setChatId(chatId);
+            payment.setStatus("process");
+            payment.setBlocks(block == null ? null : block.toString());
+            payment.setServer_url(source.SERVER_URL);
+            payment.setNumber_of_order(numberOfOrder);
+            paymentRepository.save(payment);
 
             int response = checkPaymentStatusLoop(id, source.SERVER_URL);
 
@@ -161,6 +177,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 editMessageText.setText(EmojiParser.parseToUnicode("Заказ " + numberOfOrder + " отменен :persevere:\nСкорее всего у вас истек срок оплаты. Повторите покупку или напишите в поддержку!"));
             }
             sendMessage(this, editMessageText, message);
+            paymentRepository.delete(paymentRepository.findById(numberOfOrder).get());
         };
         Thread thread = new Thread(task);
         thread.start();
