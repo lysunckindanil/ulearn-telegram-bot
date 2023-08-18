@@ -154,6 +154,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             payment.setBlocks(block == null ? null : block.toString());
             payment.setServer_url(source.SERVER_URL);
             payment.setNumber_of_order(numberOfOrder);
+            payment.setDate(new Date(System.currentTimeMillis()).toString());
             paymentRepository.save(payment);
 
             int response = checkPaymentStatusLoop(id, source.SERVER_URL);

@@ -102,8 +102,7 @@ public class PaymentTools {
         }
         return jsonObjectResponse;
     }
-
-
+    
     public void restorePayments(TelegramLongPollingBot bot) {
         List<Payment> paymentList = (List<Payment>) paymentRepository.findAll();
         for (Payment payment : paymentList) {

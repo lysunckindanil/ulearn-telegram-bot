@@ -13,6 +13,7 @@ public class Payment {
     private String id;
     private Long chatId;
     private String blocks;
-    private String status;
     private String server_url;
+    private String date;
+    private String status;
 }
