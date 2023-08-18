@@ -1,15 +1,10 @@
 package com.example.ulearn;
 
-import org.apache.commons.io.IOUtils;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Date;
 
 @SpringBootApplication
 public class UlearnApplication {

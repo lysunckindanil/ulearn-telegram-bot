@@ -27,7 +27,8 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import java.io.File;
 import java.util.*;
 
-import static com.example.ulearn.telegram_bot.service.bot_tools.PaymentTools.*;
+import static com.example.ulearn.telegram_bot.service.bot_tools.PaymentTools.checkPaymentStatusLoop;
+import static com.example.ulearn.telegram_bot.service.bot_tools.PaymentTools.getUrlJson;
 import static com.example.ulearn.telegram_bot.service.bot_tools.QuestionsTools.sendQuestions;
 import static com.example.ulearn.telegram_bot.service.bot_tools.RegisterTools.registerUserAllBlocks;
 import static com.example.ulearn.telegram_bot.service.bot_tools.RegisterTools.registerUserBlock;
@@ -41,15 +42,12 @@ public class TelegramBot extends TelegramLongPollingBot {
     private final BotResources source;
     private final PaymentRepository paymentRepository;
 
-    private final PaymentTools paymentTools;
-
     @Autowired
     public TelegramBot(BotConfig config, UserRepository userRepository, BotResources source, PaymentRepository paymentRepository, PaymentTools paymentTools) {
         this.config = config;
         this.users = userRepository;
         this.source = source;
         this.paymentRepository = paymentRepository;
-        this.paymentTools = paymentTools;
         paymentTools.restorePayments(this);
         List<BotCommand> listOfCommands = new ArrayList<>();
         listOfCommands.add(new BotCommand("/show", "Показать купленные блоки"));
