@@ -29,6 +29,7 @@ import static com.example.ulearn.telegram_bot.service.bot_tools.RegisterTools.re
 import static com.example.ulearn.telegram_bot.service.bot_tools.RegisterTools.registerUserBlock;
 import static com.example.ulearn.telegram_bot.service.bot_tools.SendMessageTools.sendMessage;
 
+@SuppressWarnings("OptionalGetWithoutIsPresent")
 @Slf4j
 @Component
 public class PaymentTools {
@@ -102,7 +103,7 @@ public class PaymentTools {
         }
         return jsonObjectResponse;
     }
-    
+
     public void restorePayments(TelegramLongPollingBot bot) {
         List<Payment> paymentList = (List<Payment>) paymentRepository.findAll();
         for (Payment payment : paymentList) {
