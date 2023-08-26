@@ -1,5 +1,12 @@
 package com.example.ulearn.telegram_bot.service.bot_tools;
 
+import com.example.ulearn.generator.Block;
+import com.example.ulearn.telegram_bot.model.Payment;
+import com.example.ulearn.telegram_bot.model.PaymentRepository;
+import com.example.ulearn.telegram_bot.model.UserRepository;
+import com.example.ulearn.telegram_bot.service.BotResources;
+import com.vdurmont.emoji.EmojiParser;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -10,14 +17,29 @@ import org.apache.http.util.EntityUtils;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import static com.example.ulearn.telegram_bot.service.bot_tools.RegisterTools.registerUserAllBlocks;
+import static com.example.ulearn.telegram_bot.service.bot_tools.RegisterTools.registerUserBlock;
+import static com.example.ulearn.telegram_bot.service.bot_tools.SendMessageTools.sendMessage;
+
+@SuppressWarnings("ALL")
 @Slf4j
+@Component
+@RequiredArgsConstructor
 public class PaymentTools {
 
+
+    private final PaymentRepository paymentRepository;
+    private final UserRepository users;
+    private final BotResources source;
 
     public static JSONObject getUrlJson(String payment_description, int price, String url) {
         Map<String, String> jsonMapToGetPayment = new HashMap<>();
@@ -45,8 +67,8 @@ public class PaymentTools {
             } catch (InterruptedException e) {
                 log.error("Thread sleep error");
             }
-
-            if (response.equals("payment.succeeded")) {
+            if (response == null) {
+            } else if (response.equals("payment.succeeded")) {
                 return 1;
             } else if (response.equals("payment.canceled")) {
                 return -1;
@@ -75,5 +97,38 @@ public class PaymentTools {
             log.error("Unable to send json request");
         }
         return jsonObjectResponse;
+    }
+
+    public void restorePayments(TelegramLongPollingBot bot) {
+        List<Payment> paymentList = (List<Payment>) paymentRepository.findAll();
+        for (Payment payment : paymentList) {
+            if (payment.getStatus().equals("process")) {
+                Runnable task = () -> {
+                    Long chatId = payment.getChatId();
+                    int numberOfOrder = payment.getNumber_of_order();
+                    int response = checkPaymentStatusLoop(payment.getId(), payment.getServer_url());
+                    String text = null;
+                    if (response == 1) {
+                        if (payment.getBlocks() == null) {
+                            users.save(registerUserAllBlocks(users.findById(chatId).get(), source.blocks));
+                            text = EmojiParser.parseToUnicode("Заказ " + numberOfOrder + " оплачен :white_check_mark:\n" + "Поздравляю! Вы купили практики всех блоков :sunglasses: \nЧтобы их получить, перейдите в /show");
+                        } else {
+                            Block block = source.blocks.stream().filter(x -> x.toString().equals(payment.getBlocks())).findFirst().get();
+                            users.save(registerUserBlock(users.findById(chatId).get(), block));
+                            text = EmojiParser.parseToUnicode("Заказ " + numberOfOrder + " оплачен :white_check_mark:\n" + "Поздравляю! Вы купили практики " + block.inRussian() + "а :sunglasses: \nЧтобы их получить, перейдите в /show");
+                        }
+                    } else if (response == -1) {
+                        text = EmojiParser.parseToUnicode("Заказ " + numberOfOrder + " отменен :persevere:\nСкорее всего платеж был отменен. Повторите покупку или напишите в поддержку!");
+                    } else if (response == 0) {
+                        text = EmojiParser.parseToUnicode("Заказ " + numberOfOrder + " отменен :persevere:\nСкорее всего у вас истек срок оплаты. Повторите покупку или напишите в поддержку!");
+                    }
+                    sendMessage(bot, chatId, text);
+                    payment.setStatus("completed");
+                    paymentRepository.save(payment);
+                };
+                Thread thread = new Thread(task);
+                thread.start();
+            }
+        }
     }
 }
