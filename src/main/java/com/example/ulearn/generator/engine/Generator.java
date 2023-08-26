@@ -1,7 +1,7 @@
 package com.example.ulearn.generator.engine;
 
-import com.example.ulearn.generator.units.CodeUnit;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FilenameUtils;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
@@ -9,7 +9,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -19,20 +18,18 @@ import java.util.*;
 @Component
 public class Generator {
 
-    public static final String src = "src/main/resources/CodeData";
-
     private static final int GENERATION_LIMIT = 1024;
 
-    static void generate(String practice) {
-        String original = readFileWithCode(new File(src + File.separator + "CodeOriginalFiles" + File.separator + practice + ".txt"));
-        Path pattern = Paths.get(src + File.separator + "CodePatternFiles" + File.separator + practice + ".txt");
-        Set<String> stringSet = getFormattedStrings(pattern, original);
-        saveFormattedStrings(stringSet, practice);
+    public static void generate(Path original, Path pattern, Path destination) throws IOException {
+        String originalString = readFileWithCode(original);
+        String folder = FilenameUtils.removeExtension(original.getFileName().toString());
+        List<String> stringSet = getFormattedStrings(pattern, originalString);
+        saveFormattedStrings(stringSet, destination, folder);
     }
 
-    private static String readFileWithCode(File file) {
+    private static String readFileWithCode(Path file) {
         StringBuilder code = new StringBuilder();
-        try (FileReader fileReader = new FileReader(file)) {
+        try (FileReader fileReader = new FileReader(file.toFile())) {
             while (fileReader.ready()) {
                 code.append((char) fileReader.read());
             }
@@ -42,16 +39,15 @@ public class Generator {
         return code.toString();
     }
 
-    private static Set<String> getFormattedStrings(Path pattern, String code) {
+    private static List<String> getFormattedStrings(Path pattern, String original) {
         List<List<String>> replacements = new ArrayList<>();
-
         // pattern generate algorithm
         List<String> patternLines;
         try {
             patternLines = Files.readAllLines(pattern);
         } catch (IOException e) {
             log.error("Generator: unable to read pattern file " + pattern);
-            return new HashSet<>();
+            return null;
         }
         for (String patternLine : patternLines) {
             String[] patternWords = patternLine.split(",");
@@ -63,51 +59,35 @@ public class Generator {
         Random random = new Random();
         // replace code variables
         for (int i = 0; i < GENERATION_LIMIT; i++) {
-            String s = code;
+            String s = original;
             for (List<String> replace : replacements) {
                 s = s.replaceAll("(\\W)(" + replace.get(0) + ")(\\W)", "$1" + replace.get(random.nextInt(replace.size())) + "$3");
             }
             strings.add(s);
         }
-        return strings;
+        return strings.stream().toList();
     }
 
-    private static void saveFormattedStrings(Set<String> strings, String practice) {
+    private static void saveFormattedStrings(List<String> strings, Path destination, String folder) throws IOException {
         // saves code files to block/practice/ dir
-        String path = src + File.separator + "CodeFormattedFiles" + File.separator + practice;
-        try {
-            Files.createDirectories(Paths.get(path));
-        } catch (IOException e) {
-            log.warn("Generator: " + path + " directories are already created");
+        Path path = Paths.get(destination + File.separator + folder);
+        if (Files.notExists(path)) {
+            Files.createDirectories(path);
         }
-        int k = 1;
-        for (String string : strings) {
-            String fileString = path + File.separator + practice + k + ".txt";
+
+        for (int i = 0; i < strings.size(); i++) {
+            String fileString = path + File.separator + folder + (i + 1) + ".txt";
             File file = new File(fileString);
             try (PrintWriter out = new PrintWriter(file, StandardCharsets.UTF_8)) {
                 if (!file.exists()) {
                     if (!file.createNewFile()) log.error("Generator: " + file + " is already created");
                 }
-                out.print(string);
+                out.print(strings.get(i));
             } catch (IOException e) {
                 log.error(e.toString());
             }
-            k += 1;
         }
     }
 
-    public static File getFile(String practice) {
-        Path dir = Paths.get(src + File.separator + "CodeFormattedFiles" + File.separator + practice);
-        if (isDirEmpty(dir)) generate(practice);
-        return Objects.requireNonNull(dir.toFile().listFiles())[0];
-    }
-
-    private static boolean isDirEmpty(final Path directory) {
-        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(directory)) {
-            return !dirStream.iterator().hasNext();
-        } catch (IOException ignored) {
-        }
-        return true;
-    }
 
 }

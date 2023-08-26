@@ -1,4 +1,4 @@
-package com.example.ulearn.telegram_bot.service;
+package com.example.ulearn.telegram_bot.service.source;
 
 import com.example.ulearn.generator.units.CodeUnit;
 import com.example.ulearn.generator.units.FormattedCodeUnit;
@@ -10,10 +10,12 @@ import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringJoiner;
 
+@SuppressWarnings("SpringPropertySource")
 @Component
 @Slf4j
 @PropertySource("application.properties")
@@ -35,18 +37,35 @@ public class BotResources {
         for (int i = 2; i < 11; i++) {
             blocks.add(new Block(i));
         }
-        blocks.get(0).addAllCodeUnits(List.of(new FormattedCodeUnit("Calculator"), new CodeUnit("check"), new CodeUnit("calculate"), new CodeUnit("getRevertString"))); //2
-        blocks.get(1).addAllCodeUnits(List.of(new FormattedCodeUnit("Hospital"), new FormattedCodeUnit("TodoList"), new CodeUnit("getTwoDimensionalArray"))); //3
-        blocks.get(2).addAllCodeUnits(List.of(new FormattedCodeUnit("School"), new FormattedCodeUnit("PhoneBook"), new CodeUnit("Line"), new CodeUnit("Client"))); //4
-        blocks.get(3).addAllCodeUnits(List.of(new FormattedCodeUnit("AbstractLogger"), new CodeUnit("TimeUnit"), new CodeUnit("Animal"))); //5
-        blocks.get(4).addAllCodeUnits(List.of(new FormattedCodeUnit("Customers"), new CodeUnit("Handler"))); //6
-        blocks.get(5).addAllCodeUnits(List.of(new FormattedCodeUnit("Utils"), new CodeUnit("FileUtils"), new CodeUnit("ImageResizer"))); //7
-        blocks.get(6).addAllCodeUnits(List.of(new FormattedCodeUnit("Parser"), new CodeUnit("Buffer"))); //8
-        blocks.get(7).addAllCodeUnits(List.of(new FormattedCodeUnit("Employees"))); //9
-        blocks.get(8).addAllCodeUnits(List.of(new FormattedCodeUnit("Airport"))); //10
+        blocks.get(0).addAllCodeUnits(List.of(getDefFCU("Calculator"), getDefCU("check"), getDefCU("calculate"), getDefCU("getRevertString"))); //2
+        blocks.get(1).addAllCodeUnits(List.of(getDefFCU("Hospital"), getDefFCU("TodoList"), getDefCU("getTwoDimensionalArray"))); //3
+        blocks.get(2).addAllCodeUnits(List.of(getDefFCU("School"), getDefFCU("PhoneBook"), getDefCU("Line"), getDefCU("Client"))); //4
+        blocks.get(3).addAllCodeUnits(List.of(getDefFCU("AbstractLogger"), getDefCU("TimeUnit"), getDefCU("Animal"))); //5
+        blocks.get(4).addAllCodeUnits(List.of(getDefFCU("Customers"), getDefCU("Handler"))); //6
+        blocks.get(5).addAllCodeUnits(List.of(getDefFCU("Utils"), getDefCU("FileUtils"), getDefCU("ImageResizer"))); //7
+        blocks.get(6).addAllCodeUnits(List.of(getDefFCU("Parser"), getDefCU("Buffer"))); //8
+        blocks.get(7).addAllCodeUnits(List.of(getDefFCU("Employees"))); //9
+        blocks.get(8).addAllCodeUnits(List.of(getDefFCU("Airport"))); //10
     }
 
-    InlineKeyboardMarkup getBuyMenu() {
+    private static FormattedCodeUnit getDefFCU(String name) {
+        String file_name = name + ".txt";
+        String src = "src" + File.separator + "main" + File.separator + "resources" + File.separator + "CodeData";
+        File original = new File(src + File.separator + "CodeOriginalFiles" + File.separator + file_name);
+        File pattern = new File(src + File.separator + "CodePatternFiles" + File.separator + file_name);
+        File destination = new File(src + File.separator + "CodeFormattedFiles" + File.separator);
+        return new FormattedCodeUnit(original, pattern, destination);
+    }
+
+    private static CodeUnit getDefCU(String name) {
+        String file_name = name + ".txt";
+        String src = "src" + File.separator + "main" + File.separator + "resources" + File.separator + "CodeData";
+        File file = new File(src + File.separator + "CodeOriginalFiles" + File.separator + file_name);
+        return new CodeUnit(file);
+    }
+
+
+    public InlineKeyboardMarkup getBuyMenu() {
         InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> keyboardRows = new ArrayList<>();
         List<InlineKeyboardButton> keyboardRow = new ArrayList<>();
@@ -61,7 +80,7 @@ public class BotResources {
         return inlineKeyboardMarkup;
     }
 
-    InlineKeyboardMarkup getOneButtonKeyboardMarkup(String text, String url, String callBackData) {
+    public InlineKeyboardMarkup getOneButtonKeyboardMarkup(String text, String url, String callBackData) {
         InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> keyboardRows = new ArrayList<>();
         List<InlineKeyboardButton> keyboardRow = new ArrayList<>();
@@ -75,7 +94,7 @@ public class BotResources {
         return inlineKeyboardMarkup;
     }
 
-    InlineKeyboardMarkup getBlockChoosingMenu() {
+    public InlineKeyboardMarkup getBlockChoosingMenu() {
         InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> keyboardRows = new ArrayList<>();
 
@@ -119,7 +138,7 @@ public class BotResources {
         return inlineKeyboardMarkup;
     }
 
-    String getOneBlockDescriptionPaymentText(Block block) {
+    public String getOneBlockDescriptionPaymentText(Block block) {
         StringJoiner joiner = new StringJoiner("\n");
         joiner.add("Вы купите практики " + block.inRussian().replace(" ", "го ") + "a:");
         for (CodeUnit codeUnit : block.getCodeUnits()) {
@@ -129,15 +148,15 @@ public class BotResources {
         return joiner.toString();
     }
 
-    String getAllBlocksDescriptionPaymentText() {
+    public String getAllBlocksDescriptionPaymentText() {
         return "Вам будут доступны все блоки!\nЦена " + PRICE_ALL_BLOCKS + " рублей";
     }
 
-    String getChoosingTwoOptionsText() {
+    public String getChoosingTwoOptionsText() {
         return EmojiParser.parseToUnicode("Вы можете купить все блоки или только один. " + "Цена всех блоков - 1800, одного - 300 рублей :innocent:");
     }
 
-    String getHelpText() {
+    public String getHelpText() {
 
         return "Оплата проводится через систему платежей ЮКасса. После оплаты вам будут доступны выбранные блоки. " + "Чтобы их получить, перейдите /show.";
     }

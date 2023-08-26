@@ -6,7 +6,9 @@ import com.example.ulearn.telegram_bot.model.Payment;
 import com.example.ulearn.telegram_bot.model.PaymentRepository;
 import com.example.ulearn.telegram_bot.model.User;
 import com.example.ulearn.telegram_bot.model.UserRepository;
-import com.example.ulearn.telegram_bot.service.bot_tools.PaymentTools;
+import com.example.ulearn.telegram_bot.service.tools.PaymentTools;
+import com.example.ulearn.telegram_bot.service.source.Block;
+import com.example.ulearn.telegram_bot.service.source.BotResources;
 import com.vdurmont.emoji.EmojiParser;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
@@ -26,12 +28,12 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import java.io.File;
 import java.util.*;
 
-import static com.example.ulearn.telegram_bot.service.bot_tools.PaymentTools.checkPaymentStatusLoop;
-import static com.example.ulearn.telegram_bot.service.bot_tools.PaymentTools.getUrlJson;
-import static com.example.ulearn.telegram_bot.service.bot_tools.QuestionsTools.sendQuestions;
-import static com.example.ulearn.telegram_bot.service.bot_tools.RegisterTools.registerUserAllBlocks;
-import static com.example.ulearn.telegram_bot.service.bot_tools.RegisterTools.registerUserBlock;
-import static com.example.ulearn.telegram_bot.service.bot_tools.SendMessageTools.sendMessage;
+import static com.example.ulearn.telegram_bot.service.tools.PaymentTools.checkPaymentStatusLoop;
+import static com.example.ulearn.telegram_bot.service.tools.PaymentTools.getUrlJson;
+import static com.example.ulearn.telegram_bot.service.tools.QuestionsTools.sendQuestions;
+import static com.example.ulearn.telegram_bot.service.tools.RegisterTools.registerUserAllBlocks;
+import static com.example.ulearn.telegram_bot.service.tools.RegisterTools.registerUserBlock;
+import static com.example.ulearn.telegram_bot.service.tools.SendMessageTools.sendMessage;
 
 @SuppressWarnings("ALL")
 @Slf4j

@@ -1,25 +1,25 @@
 package com.example.ulearn.generator.units;
 
 import lombok.Getter;
+import org.apache.commons.io.FilenameUtils;
 
 import java.io.File;
-
-import static com.example.ulearn.generator.engine.Generator.src;
 
 
 @Getter
 public class CodeUnit {
-    private final String name;
     @Getter
     private final File file;
+    private final String name;
 
-    public CodeUnit(String name) {
-        this.name = name;
-        this.file = new File(src + File.separator + "CodeOriginalFiles" + File.separator + name + ".txt");
+    public CodeUnit(File file) {
+        this.file = file;
+        this.name = FilenameUtils.removeExtension(file.getName());
     }
 
     @Override
     public String toString() {
         return name;
     }
+
 }

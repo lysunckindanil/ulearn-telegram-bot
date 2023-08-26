@@ -1,10 +1,10 @@
-package com.example.ulearn.telegram_bot.service.bot_tools;
+package com.example.ulearn.telegram_bot.service.tools;
 
-import com.example.ulearn.telegram_bot.service.Block;
+import com.example.ulearn.telegram_bot.service.source.Block;
 import com.example.ulearn.telegram_bot.model.Payment;
 import com.example.ulearn.telegram_bot.model.PaymentRepository;
 import com.example.ulearn.telegram_bot.model.UserRepository;
-import com.example.ulearn.telegram_bot.service.BotResources;
+import com.example.ulearn.telegram_bot.service.source.BotResources;
 import com.vdurmont.emoji.EmojiParser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,9 +25,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.example.ulearn.telegram_bot.service.bot_tools.RegisterTools.registerUserAllBlocks;
-import static com.example.ulearn.telegram_bot.service.bot_tools.RegisterTools.registerUserBlock;
-import static com.example.ulearn.telegram_bot.service.bot_tools.SendMessageTools.sendMessage;
+import static com.example.ulearn.telegram_bot.service.tools.RegisterTools.registerUserAllBlocks;
+import static com.example.ulearn.telegram_bot.service.tools.RegisterTools.registerUserBlock;
+import static com.example.ulearn.telegram_bot.service.tools.SendMessageTools.sendMessage;
 
 @SuppressWarnings("ALL")
 @Slf4j

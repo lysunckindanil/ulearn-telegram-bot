@@ -1,4 +1,4 @@
-package com.example.ulearn.telegram_bot.service.bot_tools;
+package com.example.ulearn.telegram_bot.service.tools;
 
 import lombok.extern.slf4j.Slf4j;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;

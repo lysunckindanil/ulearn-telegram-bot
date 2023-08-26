@@ -1,10 +1,10 @@
-package com.example.ulearn.telegram_bot.service.bot_tools;
+package com.example.ulearn.telegram_bot.service.tools;
 
 
-import com.example.ulearn.telegram_bot.service.Block;
 import com.example.ulearn.generator.units.CodeUnit;
 import com.example.ulearn.generator.units.FormattedCodeUnit;
 import com.example.ulearn.telegram_bot.model.User;
+import com.example.ulearn.telegram_bot.service.source.Block;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
@@ -53,10 +53,12 @@ public class RegisterTools {
     private static String transferDataToUserFiles(Long chatId, List<CodeUnit> codeUnits) {
         StringJoiner joiner = new StringJoiner(",");
         Path path = Paths.get(UsersCodeFiles + File.separator + chatId);
-        try {
-            Files.createDirectory(path);
-        } catch (IOException e) {
-            log.error("Unable to create directory " + path);
+        if (Files.notExists(path)) {
+            try {
+                Files.createDirectory(path);
+            } catch (IOException e) {
+                log.error("Unable to create directory " + path);
+            }
         }
         for (CodeUnit codeUnit : codeUnits) {
             File file = codeUnit.getFile();

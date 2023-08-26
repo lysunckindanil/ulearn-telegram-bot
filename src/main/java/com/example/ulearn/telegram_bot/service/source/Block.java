@@ -1,4 +1,4 @@
-package com.example.ulearn.telegram_bot.service;
+package com.example.ulearn.telegram_bot.service.source;
 
 import com.example.ulearn.generator.units.CodeUnit;
 import lombok.Data;
@@ -10,14 +10,9 @@ import java.util.List;
 public class Block implements Comparable<Block> {
     private final int number;
     private List<CodeUnit> codeUnits = new ArrayList<>();
-    ;
 
     public Block(int number) {
         this.number = number;
-    }
-
-    public void addCodeUnit(CodeUnit codeUnit) {
-        codeUnits.add(codeUnit);
     }
 
     public void addAllCodeUnits(List<CodeUnit> codeUnitsList) {
