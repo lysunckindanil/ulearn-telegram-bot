@@ -6,6 +6,7 @@ import com.example.ulearn.telegram_bot.model.PaymentRepository;
 import com.example.ulearn.telegram_bot.model.UserRepository;
 import com.example.ulearn.telegram_bot.service.BotResources;
 import com.vdurmont.emoji.EmojiParser;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -29,21 +30,16 @@ import static com.example.ulearn.telegram_bot.service.bot_tools.RegisterTools.re
 import static com.example.ulearn.telegram_bot.service.bot_tools.RegisterTools.registerUserBlock;
 import static com.example.ulearn.telegram_bot.service.bot_tools.SendMessageTools.sendMessage;
 
+@SuppressWarnings("ALL")
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class PaymentTools {
 
 
     private final PaymentRepository paymentRepository;
     private final UserRepository users;
     private final BotResources source;
-
-    @Autowired
-    public PaymentTools(PaymentRepository paymentRepository, UserRepository users, BotResources source) {
-        this.paymentRepository = paymentRepository;
-        this.users = users;
-        this.source = source;
-    }
 
     public static JSONObject getUrlJson(String payment_description, int price, String url) {
         Map<String, String> jsonMapToGetPayment = new HashMap<>();
@@ -102,7 +98,7 @@ public class PaymentTools {
         }
         return jsonObjectResponse;
     }
-    
+
     public void restorePayments(TelegramLongPollingBot bot) {
         List<Payment> paymentList = (List<Payment>) paymentRepository.findAll();
         for (Payment payment : paymentList) {

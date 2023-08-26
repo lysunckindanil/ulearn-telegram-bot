@@ -34,6 +34,7 @@ import static com.example.ulearn.telegram_bot.service.bot_tools.RegisterTools.re
 import static com.example.ulearn.telegram_bot.service.bot_tools.RegisterTools.registerUserBlock;
 import static com.example.ulearn.telegram_bot.service.bot_tools.SendMessageTools.sendMessage;
 
+@SuppressWarnings("ALL")
 @Slf4j
 @Component
 public class TelegramBot extends TelegramLongPollingBot {
@@ -68,27 +69,27 @@ public class TelegramBot extends TelegramLongPollingBot {
             long chatId = update.getMessage().getChatId();
             log.info("Message received : " + messageText + " from " + update.getMessage().getChat().getUserName());
             if (chatId == source.ADMIN_CHATID) {
-                if (!adminCommandReceived(messageText)) {
-                    switch (messageText) {
-                        case "/start" -> startCommandReceived(update.getMessage());
-                        case "/show" -> {
-                            sortBlocks(update.getMessage()); //sorts before show blocks to user
-                            showUserFiles(chatId);
-                        }
-                        case "/buy" -> {
-                            if (users.findById(chatId).isPresent() && users.findById(chatId).get().getBlocks().split(",").length == source.blocks.size()) {
-                                String text = EmojiParser.parseToUnicode("У вас уже куплены все блоки, вы большой молодец :blush:");
-                                sendMessage(this, chatId, text); //todo text
-                            } else sendMessage(this, chatId, source.getChoosingTwoOptionsText(), source.getBuyMenu());
-                        }
-                        case "/help" -> sendMessage(this, chatId, source.getHelpText());
-                        default -> {
-                            String text = EmojiParser.parseToUnicode("Я вас не понимаю, если что-то не понятно, нажимайте /help :relieved:");
-                            sendMessage(this, chatId, text);
-                        }//todo text
-                    }
-                }
+                if (adminCommandReceived(messageText)) return;
             }
+            switch (messageText) {
+                case "/start" -> startCommandReceived(update.getMessage());
+                case "/show" -> {
+                    sortBlocks(update.getMessage()); //sorts before show blocks to user
+                    showUserFiles(chatId);
+                }
+                case "/buy" -> {
+                    if (users.findById(chatId).isPresent() && users.findById(chatId).get().getBlocks().split(",").length == source.blocks.size()) {
+                        String text = EmojiParser.parseToUnicode("У вас уже куплены все блоки, вы большой молодец :blush:");
+                        sendMessage(this, chatId, text); //todo text
+                    } else sendMessage(this, chatId, source.getChoosingTwoOptionsText(), source.getBuyMenu());
+                }
+                case "/help" -> sendMessage(this, chatId, source.getHelpText());
+                default -> {
+                    String text = EmojiParser.parseToUnicode("Я вас не понимаю, если что-то не понятно, нажимайте /help :relieved:");
+                    sendMessage(this, chatId, text);
+                }//todo text
+            }
+
         } else if (update.hasCallbackQuery()) ifCallbackQueryGot(update.getCallbackQuery());
     }
 
