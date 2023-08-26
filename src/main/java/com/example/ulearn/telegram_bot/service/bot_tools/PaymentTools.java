@@ -1,6 +1,6 @@
 package com.example.ulearn.telegram_bot.service.bot_tools;
 
-import com.example.ulearn.generator.Block;
+import com.example.ulearn.telegram_bot.service.Block;
 import com.example.ulearn.telegram_bot.model.Payment;
 import com.example.ulearn.telegram_bot.model.PaymentRepository;
 import com.example.ulearn.telegram_bot.model.UserRepository;
@@ -17,7 +17,6 @@ import org.apache.http.util.EntityUtils;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 

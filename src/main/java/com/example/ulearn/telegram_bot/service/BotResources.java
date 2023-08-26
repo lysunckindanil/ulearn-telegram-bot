@@ -1,8 +1,7 @@
 package com.example.ulearn.telegram_bot.service;
 
-import com.example.ulearn.generator.Block;
-import com.example.ulearn.generator.CodeUnit;
-import com.example.ulearn.generator.FormattedCodeUnit;
+import com.example.ulearn.generator.units.CodeUnit;
+import com.example.ulearn.generator.units.FormattedCodeUnit;
 import com.vdurmont.emoji.EmojiParser;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,7 +11,6 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.StringJoiner;
 

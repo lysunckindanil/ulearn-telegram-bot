@@ -1,5 +1,6 @@
-package com.example.ulearn.generator;
+package com.example.ulearn.generator.engine;
 
+import com.example.ulearn.generator.units.CodeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -101,13 +102,13 @@ public class Generator {
         return Objects.requireNonNull(dir.toFile().listFiles())[0];
     }
 
+
 //    public static File getFileByCodeUnit(CodeUnit codeUnit) {
 //        String practice = codeUnit.getName();
 //        Path dir = Paths.get(src + File.separator + "CodeFormattedFiles" + File.separator + block + File.separator + practice);
 //        if (isDirEmpty(dir)) generate(practice, block);
 //        return Objects.requireNonNull(dir.toFile().listFiles())[0];
 //    }
-
 
 
 }

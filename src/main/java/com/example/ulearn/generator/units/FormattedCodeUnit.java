@@ -1,4 +1,4 @@
-package com.example.ulearn.generator;
+package com.example.ulearn.generator.units;
 
 import lombok.Getter;
 

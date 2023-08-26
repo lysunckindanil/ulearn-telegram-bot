@@ -1,5 +1,6 @@
-package com.example.ulearn.generator;
+package com.example.ulearn.telegram_bot.service;
 
+import com.example.ulearn.generator.units.CodeUnit;
 import lombok.Data;
 
 import java.util.ArrayList;

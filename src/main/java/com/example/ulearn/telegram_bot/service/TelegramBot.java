@@ -1,7 +1,6 @@
 package com.example.ulearn.telegram_bot.service;
 
-import com.example.ulearn.generator.Block;
-import com.example.ulearn.generator.CodeUnit;
+import com.example.ulearn.generator.units.CodeUnit;
 import com.example.ulearn.telegram_bot.config.BotConfig;
 import com.example.ulearn.telegram_bot.model.Payment;
 import com.example.ulearn.telegram_bot.model.PaymentRepository;
