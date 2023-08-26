@@ -23,11 +23,11 @@ public class Generator {
 
     private static final int GENERATION_LIMIT = 1024;
 
-    static void generate(String practice, String block) {
+    static void generate(String practice) {
         String original = readFileWithCode(new File(src + File.separator + "CodeOriginalFiles" + File.separator + practice + ".txt"));
         Path pattern = Paths.get(src + File.separator + "CodePatternFiles" + File.separator + practice + ".txt");
         Set<String> stringSet = getFormattedStrings(pattern, original);
-        saveFormattedStrings(stringSet, practice, block);
+        saveFormattedStrings(stringSet, practice);
     }
 
     private static String readFileWithCode(File file) {
@@ -72,9 +72,9 @@ public class Generator {
         return strings;
     }
 
-    private static void saveFormattedStrings(Set<String> strings, String practice, String block) {
+    private static void saveFormattedStrings(Set<String> strings, String practice) {
         // saves code files to block/practice/ dir
-        String path = src + File.separator + "CodeFormattedFiles" + File.separator + block + File.separator + practice;
+        String path = src + File.separator + "CodeFormattedFiles" + File.separator + practice;
         try {
             Files.createDirectories(Paths.get(path));
         } catch (IOException e) {
@@ -96,19 +96,18 @@ public class Generator {
         }
     }
 
-    public static File getFile(String practice, String block) {
-        Path dir = Paths.get(src + File.separator + "CodeFormattedFiles" + File.separator + block + File.separator + practice);
-//        if (isDirEmpty(dir)) generate(practice, block);
+    public static File getFile(String practice) {
+        Path dir = Paths.get(src + File.separator + "CodeFormattedFiles" + File.separator + practice);
+        if (isDirEmpty(dir)) generate(practice);
         return Objects.requireNonNull(dir.toFile().listFiles())[0];
     }
 
-
-//    public static File getFileByCodeUnit(CodeUnit codeUnit) {
-//        String practice = codeUnit.getName();
-//        Path dir = Paths.get(src + File.separator + "CodeFormattedFiles" + File.separator + block + File.separator + practice);
-//        if (isDirEmpty(dir)) generate(practice, block);
-//        return Objects.requireNonNull(dir.toFile().listFiles())[0];
-//    }
-
+    private static boolean isDirEmpty(final Path directory) {
+        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(directory)) {
+            return !dirStream.iterator().hasNext();
+        } catch (IOException ignored) {
+        }
+        return true;
+    }
 
 }
