@@ -3,34 +3,43 @@ package com.example.ulearn.generator;
 import lombok.Data;
 
 import java.util.ArrayList;
+import java.util.List;
 
 @Data
 public class Block implements Comparable<Block> {
-    private final int position;
-    private ArrayList<CodeUnit> codeUnits;
+    private final int number;
+    private List<CodeUnit> codeUnits = new ArrayList<>();
+    ;
 
-    public Block(int position, ArrayList<CodeUnit> codeUnits) {
-        this.position = position;
-        this.codeUnits = codeUnits;
+    public Block(int number) {
+        this.number = number;
+    }
+
+    public void addCodeUnit(CodeUnit codeUnit) {
+        codeUnits.add(codeUnit);
+    }
+
+    public void addAllCodeUnits(List<CodeUnit> codeUnitsList) {
+        codeUnits.addAll(codeUnitsList);
     }
 
     public String inRussian() {
-        return position + " блок";
+        return number + " блок";
     }
 
     @Override
     public String toString() {
-        return "block" + position;
+        return "block" + number;
     }
 
     @Override
     public boolean equals(Object obj) {
-        return obj instanceof Block && ((Block) obj).position == this.position;
+        return obj instanceof Block && ((Block) obj).number == this.number;
     }
 
 
     @Override
     public int compareTo(Block block) {
-        return this.position - block.getPosition();
+        return this.number - block.getNumber();
     }
 }

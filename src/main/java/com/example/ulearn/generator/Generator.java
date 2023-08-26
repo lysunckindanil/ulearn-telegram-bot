@@ -17,15 +17,12 @@ import java.util.*;
 @Slf4j
 @Component
 public class Generator {
-    public static void main(String[] args) {
-        System.out.println("main generator");
-    }
 
     public static final String src = "src/main/resources/CodeData";
 
     private static final int GENERATION_LIMIT = 1024;
 
-    private static void generate(String practice, String block) {
+    static void generate(String practice, String block) {
         String original = readFileWithCode(new File(src + File.separator + "CodeOriginalFiles" + File.separator + practice + ".txt"));
         Path pattern = Paths.get(src + File.separator + "CodePatternFiles" + File.separator + practice + ".txt");
         Set<String> stringSet = getFormattedStrings(pattern, original);
@@ -100,16 +97,17 @@ public class Generator {
 
     public static File getFile(String practice, String block) {
         Path dir = Paths.get(src + File.separator + "CodeFormattedFiles" + File.separator + block + File.separator + practice);
-        if (isDirEmpty(dir)) generate(practice, block);
+//        if (isDirEmpty(dir)) generate(practice, block);
         return Objects.requireNonNull(dir.toFile().listFiles())[0];
     }
 
-    private static boolean isDirEmpty(final Path directory) {
-        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(directory)) {
-            return !dirStream.iterator().hasNext();
-        } catch (IOException ignored) {
-        }
-        return true;
-    }
+//    public static File getFileByCodeUnit(CodeUnit codeUnit) {
+//        String practice = codeUnit.getName();
+//        Path dir = Paths.get(src + File.separator + "CodeFormattedFiles" + File.separator + block + File.separator + practice);
+//        if (isDirEmpty(dir)) generate(practice, block);
+//        return Objects.requireNonNull(dir.toFile().listFiles())[0];
+//    }
+
+
 
 }

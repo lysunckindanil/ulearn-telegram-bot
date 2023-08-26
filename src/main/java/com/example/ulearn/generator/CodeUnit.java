@@ -12,11 +12,9 @@ public class CodeUnit {
     private final String name;
     private final File file;
 
-    private static final String CodeOriginalFilesPath = src + File.separator + "CodeOriginalFiles";
-
     public CodeUnit(String name) {
         this.name = name;
-        this.file = new File(CodeOriginalFilesPath + File.separator + name + ".txt");
+        this.file = new File(src + File.separator + "CodeOriginalFiles" + File.separator + name + ".txt");
     }
 
     @Override
