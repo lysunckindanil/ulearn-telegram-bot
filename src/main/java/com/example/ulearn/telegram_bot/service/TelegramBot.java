@@ -1,10 +1,12 @@
 package com.example.ulearn.telegram_bot.service;
 
-import com.example.ulearn.generator.Block;
-import com.example.ulearn.generator.CodeUnit;
+import com.example.ulearn.generator.units.CodeUnit;
 import com.example.ulearn.telegram_bot.config.BotConfig;
+import com.example.ulearn.telegram_bot.model.Payment;
+import com.example.ulearn.telegram_bot.model.PaymentRepository;
 import com.example.ulearn.telegram_bot.model.User;
 import com.example.ulearn.telegram_bot.model.UserRepository;
+import com.example.ulearn.telegram_bot.service.bot_tools.PaymentTools;
 import com.vdurmont.emoji.EmojiParser;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
@@ -31,18 +33,22 @@ import static com.example.ulearn.telegram_bot.service.bot_tools.RegisterTools.re
 import static com.example.ulearn.telegram_bot.service.bot_tools.RegisterTools.registerUserBlock;
 import static com.example.ulearn.telegram_bot.service.bot_tools.SendMessageTools.sendMessage;
 
+@SuppressWarnings("ALL")
 @Slf4j
 @Component
 public class TelegramBot extends TelegramLongPollingBot {
     private final BotConfig config;
     private final UserRepository users;
     private final BotResources source;
+    private final PaymentRepository paymentRepository;
 
     @Autowired
-    public TelegramBot(BotConfig config, UserRepository userRepository, BotResources source) {
+    public TelegramBot(BotConfig config, UserRepository userRepository, BotResources source, PaymentRepository paymentRepository, PaymentTools paymentTools) {
         this.config = config;
         this.users = userRepository;
         this.source = source;
+        this.paymentRepository = paymentRepository;
+        paymentTools.restorePayments(this);
         List<BotCommand> listOfCommands = new ArrayList<>();
         listOfCommands.add(new BotCommand("/show", "Показать купленные блоки"));
         listOfCommands.add(new BotCommand("/buy", "Купить блоки"));
@@ -62,27 +68,27 @@ public class TelegramBot extends TelegramLongPollingBot {
             long chatId = update.getMessage().getChatId();
             log.info("Message received : " + messageText + " from " + update.getMessage().getChat().getUserName());
             if (chatId == source.ADMIN_CHATID) {
-                if (!adminCommandReceived(messageText)) {
-                    switch (messageText) {
-                        case "/start" -> startCommandReceived(update.getMessage());
-                        case "/show" -> {
-                            sortBlocks(update.getMessage()); //sorts before show blocks to user
-                            showUserFiles(chatId);
-                        }
-                        case "/buy" -> {
-                            if (users.findById(chatId).isPresent() && users.findById(chatId).get().getBlocks().split(",").length == source.blocks.size()) {
-                                String text = EmojiParser.parseToUnicode("У вас уже куплены все блоки, вы большой молодец :blush:");
-                                sendMessage(this, chatId, text); //todo text
-                            } else sendMessage(this, chatId, source.getChoosingTwoOptionsText(), source.getBuyMenu());
-                        }
-                        case "/help" -> sendMessage(this, chatId, source.getHelpText());
-                        default -> {
-                            String text = EmojiParser.parseToUnicode("Я вас не понимаю, если что-то не понятно, нажимайте /help :relieved:");
-                            sendMessage(this, chatId, text);
-                        }//todo text
-                    }
-                }
+                if (adminCommandReceived(messageText)) return;
             }
+            switch (messageText) {
+                case "/start" -> startCommandReceived(update.getMessage());
+                case "/show" -> {
+                    sortBlocks(update.getMessage()); //sorts before show blocks to user
+                    showUserFiles(chatId);
+                }
+                case "/buy" -> {
+                    if (users.findById(chatId).isPresent() && users.findById(chatId).get().getBlocks().split(",").length == source.blocks.size()) {
+                        String text = EmojiParser.parseToUnicode("У вас уже куплены все блоки, вы большой молодец :blush:");
+                        sendMessage(this, chatId, text); //todo text
+                    } else sendMessage(this, chatId, source.getChoosingTwoOptionsText(), source.getBuyMenu());
+                }
+                case "/help" -> sendMessage(this, chatId, source.getHelpText());
+                default -> {
+                    String text = EmojiParser.parseToUnicode("Я вас не понимаю, если что-то не понятно, нажимайте /help :relieved:");
+                    sendMessage(this, chatId, text);
+                }//todo text
+            }
+
         } else if (update.hasCallbackQuery()) ifCallbackQueryGot(update.getCallbackQuery());
     }
 
@@ -139,6 +145,15 @@ public class TelegramBot extends TelegramLongPollingBot {
             sendMessage(this, editMessageText, message);
 
             // process of checking whether payment paid or not
+            Payment payment = new Payment();
+            payment.setId(id);
+            payment.setChatId(chatId);
+            payment.setStatus("process");
+            payment.setBlocks(block == null ? null : block.toString());
+            payment.setServer_url(source.SERVER_URL);
+            payment.setNumber_of_order(numberOfOrder);
+            payment.setDate(new Date(System.currentTimeMillis()).toString());
+            paymentRepository.save(payment);
 
             int response = checkPaymentStatusLoop(id, source.SERVER_URL);
 
@@ -161,6 +176,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 editMessageText.setText(EmojiParser.parseToUnicode("Заказ " + numberOfOrder + " отменен :persevere:\nСкорее всего у вас истек срок оплаты. Повторите покупку или напишите в поддержку!"));
             }
             sendMessage(this, editMessageText, message);
+            paymentRepository.delete(paymentRepository.findById(numberOfOrder).get());
         };
         Thread thread = new Thread(task);
         thread.start();

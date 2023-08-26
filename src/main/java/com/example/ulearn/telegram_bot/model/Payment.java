@@ -4,14 +4,15 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import lombok.Data;
 
-@Entity
 @Data
+@Entity
 public class Payment {
     @Id
+    private Integer number_of_order;
     private String id;
     private Long chatId;
-    private String url;
-
-    private String block;
+    private String blocks;
+    private String server_url;
+    private String date;
     private String status;
 }

@@ -1,5 +1,6 @@
-package com.example.ulearn.generator;
+package com.example.ulearn.generator.engine;
 
+import com.example.ulearn.generator.units.CodeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -17,19 +18,16 @@ import java.util.*;
 @Slf4j
 @Component
 public class Generator {
-    public static void main(String[] args) {
-        System.out.println("main generator");
-    }
 
     public static final String src = "src/main/resources/CodeData";
 
     private static final int GENERATION_LIMIT = 1024;
 
-    private static void generate(String practice, String block) {
+    static void generate(String practice) {
         String original = readFileWithCode(new File(src + File.separator + "CodeOriginalFiles" + File.separator + practice + ".txt"));
         Path pattern = Paths.get(src + File.separator + "CodePatternFiles" + File.separator + practice + ".txt");
         Set<String> stringSet = getFormattedStrings(pattern, original);
-        saveFormattedStrings(stringSet, practice, block);
+        saveFormattedStrings(stringSet, practice);
     }
 
     private static String readFileWithCode(File file) {
@@ -74,9 +72,9 @@ public class Generator {
         return strings;
     }
 
-    private static void saveFormattedStrings(Set<String> strings, String practice, String block) {
+    private static void saveFormattedStrings(Set<String> strings, String practice) {
         // saves code files to block/practice/ dir
-        String path = src + File.separator + "CodeFormattedFiles" + File.separator + block + File.separator + practice;
+        String path = src + File.separator + "CodeFormattedFiles" + File.separator + practice;
         try {
             Files.createDirectories(Paths.get(path));
         } catch (IOException e) {
@@ -98,9 +96,9 @@ public class Generator {
         }
     }
 
-    public static File getFile(String practice, String block) {
-        Path dir = Paths.get(src + File.separator + "CodeFormattedFiles" + File.separator + block + File.separator + practice);
-        if (isDirEmpty(dir)) generate(practice, block);
+    public static File getFile(String practice) {
+        Path dir = Paths.get(src + File.separator + "CodeFormattedFiles" + File.separator + practice);
+        if (isDirEmpty(dir)) generate(practice);
         return Objects.requireNonNull(dir.toFile().listFiles())[0];
     }
 

@@ -1,8 +1,7 @@
 package com.example.ulearn.telegram_bot.service;
 
-import com.example.ulearn.generator.Block;
-import com.example.ulearn.generator.CodeUnit;
-import com.example.ulearn.generator.FormattedCodeUnit;
+import com.example.ulearn.generator.units.CodeUnit;
+import com.example.ulearn.generator.units.FormattedCodeUnit;
 import com.vdurmont.emoji.EmojiParser;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,29 +18,32 @@ import java.util.StringJoiner;
 @Slf4j
 @PropertySource("application.properties")
 public class BotResources {
+    public List<Block> blocks = new ArrayList<>();
+
     @Value("${SERVER_URL}")
     public String SERVER_URL;
     @Value("${price.all_blocks}")
     public int PRICE_ALL_BLOCKS;
     @Value("${price.one_block}")
     public int PRICE_ONE_BLOCK;
-    public List<Block> blocks = new ArrayList<>();
     public String BUY_ALL_STRING = "BUY_ALL";
     public String BUY_ONE_STRING = "BUY_ONE";
     @Value("${admin.chatId}")
     public long ADMIN_CHATID;
 
-
     {
-        blocks.add(new Block(2, new ArrayList<>(List.of(new FormattedCodeUnit("Calculator", "block2"), new CodeUnit("check"), new CodeUnit("calculate"), new CodeUnit("getRevertString")))));
-        blocks.add(new Block(3, new ArrayList<>(List.of(new FormattedCodeUnit("Hospital", "block3"), new FormattedCodeUnit("TodoList", "block3"), new CodeUnit("getTwoDimensionalArray")))));
-        blocks.add(new Block(4, new ArrayList<>(List.of(new FormattedCodeUnit("School", "block4"), new FormattedCodeUnit("PhoneBook", "block4"), new CodeUnit("Line"), new CodeUnit("Client")))));
-        blocks.add(new Block(5, new ArrayList<>(List.of(new FormattedCodeUnit("AbstractLogger", "block5"), new CodeUnit("TimeUnit"), new CodeUnit("Animal")))));
-        blocks.add(new Block(6, new ArrayList<>(List.of(new FormattedCodeUnit("Customers", "block6"), new CodeUnit("Handler")))));
-        blocks.add(new Block(7, new ArrayList<>(List.of(new FormattedCodeUnit("Utils", "block7"), new CodeUnit("FileUtils"), new CodeUnit("ImageResizer")))));
-        blocks.add(new Block(8, new ArrayList<>(List.of(new FormattedCodeUnit("Parser", "block8"), new CodeUnit("Buffer")))));
-        blocks.add(new Block(9, new ArrayList<>(List.of(new FormattedCodeUnit("Employees", "block9")))));
-        blocks.add(new Block(10, new ArrayList<>(List.of(new FormattedCodeUnit("Airport", "block10")))));
+        for (int i = 2; i < 11; i++) {
+            blocks.add(new Block(i));
+        }
+        blocks.get(0).addAllCodeUnits(List.of(new FormattedCodeUnit("Calculator"), new CodeUnit("check"), new CodeUnit("calculate"), new CodeUnit("getRevertString"))); //2
+        blocks.get(1).addAllCodeUnits(List.of(new FormattedCodeUnit("Hospital"), new FormattedCodeUnit("TodoList"), new CodeUnit("getTwoDimensionalArray"))); //3
+        blocks.get(2).addAllCodeUnits(List.of(new FormattedCodeUnit("School"), new FormattedCodeUnit("PhoneBook"), new CodeUnit("Line"), new CodeUnit("Client"))); //4
+        blocks.get(3).addAllCodeUnits(List.of(new FormattedCodeUnit("AbstractLogger"), new CodeUnit("TimeUnit"), new CodeUnit("Animal"))); //5
+        blocks.get(4).addAllCodeUnits(List.of(new FormattedCodeUnit("Customers"), new CodeUnit("Handler"))); //6
+        blocks.get(5).addAllCodeUnits(List.of(new FormattedCodeUnit("Utils"), new CodeUnit("FileUtils"), new CodeUnit("ImageResizer"))); //7
+        blocks.get(6).addAllCodeUnits(List.of(new FormattedCodeUnit("Parser"), new CodeUnit("Buffer"))); //8
+        blocks.get(7).addAllCodeUnits(List.of(new FormattedCodeUnit("Employees"))); //9
+        blocks.get(8).addAllCodeUnits(List.of(new FormattedCodeUnit("Airport"))); //10
     }
 
     InlineKeyboardMarkup getBuyMenu() {

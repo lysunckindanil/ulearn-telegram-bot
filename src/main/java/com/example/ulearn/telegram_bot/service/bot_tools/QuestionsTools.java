@@ -1,6 +1,6 @@
 package com.example.ulearn.telegram_bot.service.bot_tools;
 
-import com.example.ulearn.generator.Block;
+import com.example.ulearn.telegram_bot.service.Block;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 
 import java.io.File;
