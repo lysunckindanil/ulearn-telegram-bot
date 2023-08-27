@@ -22,7 +22,7 @@ import java.util.StringJoiner;
 public class BotResources {
     public List<Block> blocks = new ArrayList<>();
 
-    @Value("${SERVER_URL}")
+    @Value("${server.url}")
     public String SERVER_URL;
     @Value("${price.all_blocks}")
     public int PRICE_ALL_BLOCKS;

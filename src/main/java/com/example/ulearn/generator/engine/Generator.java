@@ -21,13 +21,13 @@ public class Generator {
     private static final int GENERATION_LIMIT = 1024;
 
     public static void generate(Path original, Path pattern, Path destination) throws IOException {
-        String originalString = readFileWithCode(original);
+        String originalString = readFile(original);
+        List<String> formattedStrings = getFormattedStrings(pattern, originalString);
         String folder = FilenameUtils.removeExtension(original.getFileName().toString());
-        List<String> stringSet = getFormattedStrings(pattern, originalString);
-        saveFormattedStrings(stringSet, destination, folder);
+        saveFormattedStrings(formattedStrings, destination, folder);
     }
 
-    private static String readFileWithCode(Path file) {
+    private static String readFile(Path file) {
         StringBuilder code = new StringBuilder();
         try (FileReader fileReader = new FileReader(file.toFile())) {
             while (fileReader.ready()) {
@@ -41,7 +41,6 @@ public class Generator {
 
     private static List<String> getFormattedStrings(Path pattern, String original) {
         List<List<String>> replacements = new ArrayList<>();
-        // pattern generate algorithm
         List<String> patternLines;
         try {
             patternLines = Files.readAllLines(pattern);
@@ -57,7 +56,7 @@ public class Generator {
 
         Set<String> strings = new HashSet<>(); // set for formatted code strings
         Random random = new Random();
-        // replace code variables
+        // replace code variables therefore get new strings
         for (int i = 0; i < GENERATION_LIMIT; i++) {
             String s = original;
             for (List<String> replace : replacements) {
@@ -69,15 +68,14 @@ public class Generator {
     }
 
     private static void saveFormattedStrings(List<String> strings, Path destination, String folder) throws IOException {
-        // saves code files to block/practice/ dir
+        //create folder for strings if there is no any
         Path path = Paths.get(destination + File.separator + folder);
         if (Files.notExists(path)) {
             Files.createDirectories(path);
         }
-
+        //print each string to file and save em to folders
         for (int i = 0; i < strings.size(); i++) {
-            String fileString = path + File.separator + folder + (i + 1) + ".txt";
-            File file = new File(fileString);
+            File file = new File(path + File.separator + folder + (i + 1) + ".txt");
             try (PrintWriter out = new PrintWriter(file, StandardCharsets.UTF_8)) {
                 if (!file.exists()) {
                     if (!file.createNewFile()) log.error("Generator: " + file + " is already created");
@@ -88,6 +86,5 @@ public class Generator {
             }
         }
     }
-
 
 }
