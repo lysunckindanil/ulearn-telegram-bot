@@ -1,13 +1,13 @@
-package com.example.ulearn.telegram_bot.service.bot_tools;
+package com.example.ulearn.telegram_bot.service.tools;
 
-import com.example.ulearn.generator.Block;
+import com.example.ulearn.telegram_bot.service.source.Block;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 
 import java.io.File;
 import java.util.List;
 import java.util.Objects;
 
-import static com.example.ulearn.telegram_bot.service.bot_tools.SendMessageTools.sendMessage;
+import static com.example.ulearn.telegram_bot.service.tools.SendMessageTools.sendMessage;
 
 public class QuestionsTools {
     public static void sendQuestions(TelegramLongPollingBot bot, long chatId, Block block) {

@@ -1,11 +1,12 @@
-package com.example.ulearn.telegram_bot.service.bot_tools;
+package com.example.ulearn.telegram_bot.service.tools;
 
-import com.example.ulearn.generator.Block;
 import com.example.ulearn.telegram_bot.model.Payment;
 import com.example.ulearn.telegram_bot.model.PaymentRepository;
 import com.example.ulearn.telegram_bot.model.UserRepository;
-import com.example.ulearn.telegram_bot.service.BotResources;
+import com.example.ulearn.telegram_bot.service.source.Block;
+import com.example.ulearn.telegram_bot.service.source.BotResources;
 import com.vdurmont.emoji.EmojiParser;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -16,7 +17,6 @@ import org.apache.http.util.EntityUtils;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 
@@ -25,26 +25,20 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.example.ulearn.telegram_bot.service.bot_tools.RegisterTools.registerUserAllBlocks;
-import static com.example.ulearn.telegram_bot.service.bot_tools.RegisterTools.registerUserBlock;
-import static com.example.ulearn.telegram_bot.service.bot_tools.SendMessageTools.sendMessage;
+import static com.example.ulearn.telegram_bot.service.tools.RegisterTools.registerUserAllBlocks;
+import static com.example.ulearn.telegram_bot.service.tools.RegisterTools.registerUserBlock;
+import static com.example.ulearn.telegram_bot.service.tools.SendMessageTools.sendMessage;
 
 @SuppressWarnings("OptionalGetWithoutIsPresent")
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class PaymentTools {
 
 
     private final PaymentRepository paymentRepository;
     private final UserRepository users;
     private final BotResources source;
-
-    @Autowired
-    public PaymentTools(PaymentRepository paymentRepository, UserRepository users, BotResources source) {
-        this.paymentRepository = paymentRepository;
-        this.users = users;
-        this.source = source;
-    }
 
     public static JSONObject getUrlJson(String payment_description, int price, String url) {
         Map<String, String> jsonMapToGetPayment = new HashMap<>();
@@ -72,13 +66,14 @@ public class PaymentTools {
             } catch (InterruptedException e) {
                 log.error("Thread sleep error");
             }
-            if (response == null) {
-            } else if (response.equals("payment.succeeded")) {
-                return 1;
-            } else if (response.equals("payment.canceled")) {
-                return -1;
-            } else if (i == limit - 1) {
-                return 0;
+            if (response != null) {
+                if (response.equals("payment.succeeded")) {
+                    return 1;
+                } else if (response.equals("payment.canceled")) {
+                    return -1;
+                } else if (i == limit - 1) {
+                    return 0;
+                }
             }
         }
 
@@ -86,7 +81,6 @@ public class PaymentTools {
     }
 
     public static JSONObject sendJson(JSONObject jsonObject, String url) {
-
         String responseJSON;
         JSONObject jsonObjectResponse = null;
         try (CloseableHttpClient httpClient = HttpClientBuilder.create().build()) {

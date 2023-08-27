@@ -1,46 +1,39 @@
 package com.example.ulearn;
 
+import lombok.extern.slf4j.Slf4j;
+import org.json.simple.JSONObject;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-import java.io.File;
 import java.io.IOException;
+import java.util.Properties;
+
+import static com.example.ulearn.telegram_bot.service.tools.PaymentTools.sendJson;
 
 @SpringBootApplication
+@Slf4j
 public class UlearnApplication {
 
+
     public static void main(String[] args) {
-        flaskLocal();
-        SpringApplication.run(UlearnApplication.class, args);
-    }
-
-    static void flaskServer() {
-        String dir = new File("").getAbsolutePath();
-        File python = new File(dir + "/BOOT-INF/classes/flaskUlearn/venv/bin/python");
-        File app = new File(dir + "/BOOT-INF/classes/flaskUlearn/app.py");
-
-        try {
-            Process process0 = new ProcessBuilder("jar", "xf", "ulearn-0.0.1-SNAPSHOT.jar", "/BOOT-INF/classes/flaskUlearn").start();
-            Thread.sleep(500);
-            Process process1 = new ProcessBuilder("chmod", "+x", python.getPath()).start();
-            Thread.sleep(500);
-            Process process2 = new ProcessBuilder(python.getPath(), app.getPath()).start();
-            Process process3 = new ProcessBuilder("ngrok", "http", "5000").start();
-        } catch (IOException | InterruptedException e) {
-            throw new RuntimeException(e);
+        if (checkServer()) {
+            SpringApplication.run(UlearnApplication.class, args);
+        } else {
+            log.error("Server is not started!");
         }
     }
 
-    static void flaskLocal() {
-        File python = new File("src/main/resources/flaskUlearn/venv/bin/python");
-        File app = new File("src/main/resources/flaskUlearn/app.py");
+    static boolean checkServer() {
+        Properties prop = new Properties();
+        String server_url;
         try {
-            Process process0 = new ProcessBuilder(python.getAbsolutePath(), app.getAbsolutePath()).start();
-            Process process1 = new ProcessBuilder("ngrok", "http", "5000").start();
+            prop.load(UlearnApplication.class.getClassLoader().getResourceAsStream("application.properties"));
+            server_url = prop.getProperty("server.url");
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            log.error("Unable to load server url from properties");
+            return false;
         }
+        return sendJson(new JSONObject(), server_url) != null;
     }
-
 
 }
