@@ -18,11 +18,18 @@ import java.util.*;
 @Component
 public class Generator {
 
-    private static final int GENERATION_LIMIT = 1024;
+    private static final int DEFAULT_GENERATION_LIMIT = 1024;
 
     public static void generate(Path original, Path pattern, Path destination) throws IOException {
         String originalString = readFile(original);
-        List<String> formattedStrings = getFormattedStrings(pattern, originalString);
+        List<String> formattedStrings = getFormattedStrings(pattern, originalString, DEFAULT_GENERATION_LIMIT);
+        String folder = FilenameUtils.removeExtension(original.getFileName().toString());
+        saveFormattedStrings(formattedStrings, destination, folder);
+    }
+
+    public static void generate(Path original, Path pattern, Path destination, int limit) throws IOException {
+        String originalString = readFile(original);
+        List<String> formattedStrings = getFormattedStrings(pattern, originalString, limit);
         String folder = FilenameUtils.removeExtension(original.getFileName().toString());
         saveFormattedStrings(formattedStrings, destination, folder);
     }
@@ -39,7 +46,7 @@ public class Generator {
         return code.toString();
     }
 
-    private static List<String> getFormattedStrings(Path pattern, String original) {
+    private static List<String> getFormattedStrings(Path pattern, String original, int limit) {
         List<List<String>> replacements = new ArrayList<>();
         List<String> patternLines;
         try {
@@ -57,7 +64,7 @@ public class Generator {
         Set<String> strings = new HashSet<>(); // set for formatted code strings
         Random random = new Random();
         // replace code variables therefore get new strings
-        for (int i = 0; i < GENERATION_LIMIT; i++) {
+        for (int i = 0; i < limit; i++) {
             String s = original;
             for (List<String> replace : replacements) {
                 s = s.replaceAll("(\\W)(" + replace.get(0) + ")(\\W)", "$1" + replace.get(random.nextInt(replace.size())) + "$3");
