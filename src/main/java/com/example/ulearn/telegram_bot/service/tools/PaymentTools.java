@@ -2,6 +2,7 @@ package com.example.ulearn.telegram_bot.service.tools;
 
 import com.example.ulearn.telegram_bot.model.Payment;
 import com.example.ulearn.telegram_bot.model.PaymentRepository;
+import com.example.ulearn.telegram_bot.model.User;
 import com.example.ulearn.telegram_bot.model.UserRepository;
 import com.example.ulearn.telegram_bot.service.TelegramBot;
 import com.example.ulearn.telegram_bot.service.source.Block;
@@ -25,8 +26,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.example.ulearn.telegram_bot.service.tools.RegisterTools.registerUserAllBlocks;
-import static com.example.ulearn.telegram_bot.service.tools.RegisterTools.registerUserBlock;
+import static com.example.ulearn.telegram_bot.service.tools.RegisterTools.registerUserBlocks;
+import static com.example.ulearn.telegram_bot.service.tools.RegisterTools.registerUserBlocks;
 import static com.example.ulearn.telegram_bot.service.tools.SendMessageTools.sendMessage;
 
 @SuppressWarnings("OptionalGetWithoutIsPresent")
@@ -37,7 +38,7 @@ public class PaymentTools {
 
 
     private final PaymentRepository paymentRepository;
-    private final UserRepository users;
+    private final UserRepository userRepository;
     private final BotResources source;
 
     public static JSONObject getUrlJson(String payment_description, int price, String url) {
@@ -109,11 +110,15 @@ public class PaymentTools {
                     String text = null;
                     if (response == 1) {
                         if (payment.getBlocks() == null) {
-                            users.save(registerUserAllBlocks(users.findById(chatId).get(), source.blocks));
+                            User user = userRepository.findById(chatId).get();
+                            RegisterTools.registerUserBlocks(user, source.blocks);
+                            userRepository.save(user);
                             text = EmojiParser.parseToUnicode("Заказ " + numberOfOrder + " оплачен :white_check_mark:\n" + "Поздравляю! Вы купили практики всех блоков :sunglasses: \nЧтобы их получить, перейдите в /show");
                         } else {
                             Block block = source.blocks.stream().filter(x -> x.toString().equals(payment.getBlocks())).findFirst().get();
-                            users.save(registerUserBlock(users.findById(chatId).get(), block));
+                            User user = userRepository.findById(chatId).get();
+                            registerUserBlocks(user, block);
+                            userRepository.save(user);
                             text = EmojiParser.parseToUnicode("Заказ " + numberOfOrder + " оплачен :white_check_mark:\n" + "Поздравляю! Вы купили практики " + block.inRussian() + "а :sunglasses: \nЧтобы их получить, перейдите в /show");
                         }
                         bot.sortUserBlocks(chatId);

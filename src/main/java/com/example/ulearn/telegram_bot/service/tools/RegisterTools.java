@@ -22,20 +22,24 @@ public class RegisterTools {
 
     private static final String UsersCodeFiles = "src/main/resources/CodeData" + File.separator + "UsersCodeFiles";
 
-    public static User registerUserAllBlocks(User user, List<Block> blocks) {
+    public static void registerUserBlocks(User user, List<Block> blocks) {
         // add all blocks user doesn't have to database and resources
-
         String[] string = user.getBlocks().split(",");
         for (Block block : blocks) {
             if (Arrays.stream(string).noneMatch(x -> x.equals(block.toString()))) {
-                user = registerUserBlock(user, block);
+                register(user, block);
+                log.info("Registered " + block + " chatId: " + user.getChatId());
+            } else {
+                log.warn(block + " is yet registered to the user");
             }
         }
-        return user;
-
     }
 
-    public static User registerUserBlock(User user, Block block) {
+    public static void registerUserBlocks(User user, Block block) {
+        registerUserBlocks(user, List.of(block));
+    }
+
+    private static void register(User user, Block block) {
         // transfer files from resources to user folder and adds information to database
         String files = transferDataToUserFiles(user.getChatId(), block.getCodeUnits()); //transfer files from resources to user folder
         String user_files = user.getFiles();
@@ -47,12 +51,13 @@ public class RegisterTools {
             user.setFiles(user_files + "," + files);
             user.setBlocks(user.getBlocks() + "," + block);
         }
-        return user;
     }
 
     private static String transferDataToUserFiles(Long chatId, List<CodeUnit> codeUnits) {
+        // moves or copies files to user folder
         StringJoiner joiner = new StringJoiner(",");
         Path path = Paths.get(UsersCodeFiles + File.separator + chatId);
+        // creates user directory if there isn't any
         if (Files.notExists(path)) {
             try {
                 Files.createDirectory(path);
@@ -60,6 +65,7 @@ public class RegisterTools {
                 log.error("Unable to create directory " + path);
             }
         }
+        // moves code units to the directory
         for (CodeUnit codeUnit : codeUnits) {
             File file = codeUnit.getFile();
             joiner.add(path + File.separator + file.getName());
@@ -73,6 +79,7 @@ public class RegisterTools {
                 log.error("Unable to move " + file + " to " + path);
             }
         }
+        log.info("Transferred files " + codeUnits + " chatId: " + chatId);
         return joiner.toString();
     }
 }

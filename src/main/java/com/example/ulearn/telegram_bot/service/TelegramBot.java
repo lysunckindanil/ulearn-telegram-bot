@@ -9,6 +9,7 @@ import com.example.ulearn.telegram_bot.model.UserRepository;
 import com.example.ulearn.telegram_bot.service.source.Block;
 import com.example.ulearn.telegram_bot.service.source.BotResources;
 import com.example.ulearn.telegram_bot.service.tools.PaymentTools;
+import com.example.ulearn.telegram_bot.service.tools.RegisterTools;
 import com.vdurmont.emoji.EmojiParser;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
@@ -31,8 +32,7 @@ import java.util.*;
 import static com.example.ulearn.telegram_bot.service.tools.PaymentTools.checkPaymentStatusLoop;
 import static com.example.ulearn.telegram_bot.service.tools.PaymentTools.getUrlJson;
 import static com.example.ulearn.telegram_bot.service.tools.QuestionsTools.sendQuestions;
-import static com.example.ulearn.telegram_bot.service.tools.RegisterTools.registerUserAllBlocks;
-import static com.example.ulearn.telegram_bot.service.tools.RegisterTools.registerUserBlock;
+import static com.example.ulearn.telegram_bot.service.tools.RegisterTools.registerUserBlocks;
 import static com.example.ulearn.telegram_bot.service.tools.SendMessageTools.sendMessage;
 
 @SuppressWarnings("OptionalGetWithoutIsPresent")
@@ -91,22 +91,23 @@ public class TelegramBot extends TelegramLongPollingBot {
             }
 
         } else if (update.hasCallbackQuery()) ifCallbackQueryGot(update.getCallbackQuery());
-    }
+    } //done
 
     private void ifCallbackQueryGot(CallbackQuery callbackQuery) {
-        //todo change text
         String callBackData = callbackQuery.getData();
         Message message = callbackQuery.getMessage();
         long chatId = message.getChatId();
         EditMessageText editMessageText = new EditMessageText();
-
+        // here two conditions below (BUY_ALL and BUY_ONE) for send user for payment action
         if (callBackData.equals(source.BUY_ALL_STRING)) {
             buy(chatId, null, message);
         } else if (callBackData.equals(source.BUY_ONE_STRING)) {
+            // here bot sends user block choosing form in order to know which block the client wants to buy
             editMessageText.setText("Теперь, пожалуйста, выберите блок, который хотите купить");
             editMessageText.setReplyMarkup(source.getBlockChoosingMenu());
             sendMessage(this, editMessageText, message);
         } else if (callBackData.startsWith("block")) {
+            // here callBackData from block choosing form
             if (Arrays.asList(userRepository.findById(chatId).get().getBlocks().split(",")).contains(callBackData)) {
                 editMessageText.setText(EmojiParser.parseToUnicode("У вас уже куплен этот блок :face_with_monocle:"));
                 sendMessage(this, editMessageText, message);
@@ -115,11 +116,12 @@ public class TelegramBot extends TelegramLongPollingBot {
                 buy(chatId, block, message);
             }
         } else if (callBackData.startsWith("get")) {
+            // callBack on /show -> get any block command
             editMessageText.setText("Получено!");
             getUserFiles(chatId, source.blocks.stream().filter(x -> ("get" + x.toString()).equals(callBackData)).findFirst().get());
             sendMessage(this, editMessageText, message);
         }
-    }
+    } //done
 
     private void buy(long chatId, Block block, Message message) {
         //todo change text
@@ -157,12 +159,15 @@ public class TelegramBot extends TelegramLongPollingBot {
 
             if (response == 1) {
                 editMessageText.setReplyMarkup(null);
+                User user = userRepository.findById(chatId).get();
                 if (block == null) {
-                    userRepository.save(registerUserAllBlocks(userRepository.findById(chatId).get(), source.blocks));
+                    RegisterTools.registerUserBlocks(user, source.blocks);
+                    userRepository.save(user);
                     editMessageText.setText(EmojiParser.parseToUnicode("Заказ " + numberOfOrder + " оплачен :white_check_mark:\n" + "Поздравляю! Вы купили практики всех блоков :sunglasses: \nЧтобы их получить, перейдите в /show"));
 
                 } else {
-                    userRepository.save(registerUserBlock(userRepository.findById(chatId).get(), block));
+                    registerUserBlocks(user, block);
+                    userRepository.save(user);
                     editMessageText.setText(EmojiParser.parseToUnicode("Заказ " + numberOfOrder + " оплачен :white_check_mark:\n" + "Поздравляю! Вы купили практики " + block.inRussian() + "а :sunglasses: \nЧтобы их получить, перейдите в /show"));
                 }
                 sortUserBlocks(chatId);
@@ -181,32 +186,47 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private boolean adminCommandReceived(String messageText) {
-        String[] commands = messageText.split(" ");
-        List<User> users1 = (List<User>) userRepository.findAll();
-        var chatIds = users1.stream().map(User::getChatId).toList();
+        // here admin commands
+        var commands = messageText.split(" ");
+        var users = (List<User>) userRepository.findAll();
+        var chatIds = users.stream().map(User::getChatId).toList();
+
+        /* returns true if any condition was passed in order to know whether admin wanted
+           to use his commands or not */
         if (messageText.contains("/send") && commands.length > 1) {
-            for (User user : users1) {
+            // send text message to all the users in database
+            for (User user : users) {
                 sendMessage(this, user.getChatId(), messageText.substring(messageText.indexOf(" ")));
             }
             return true;
-        } else if (messageText.contains("/registerOne") && commands[1].chars().allMatch(Character::isDigit) && chatIds.contains(Long.parseLong(commands[1])) && commands.length == 3) {
-            List<String> blocks = source.blocks.stream().map(Block::toString).toList();
-            if (blocks.stream().anyMatch(commands[2]::equals)) {
+        } else if (messageText.contains("/register") && commands[1].chars().allMatch(Character::isDigit) && chatIds.contains(Long.parseLong(commands[1])) && commands.length == 3) {
+            // gives any user block by pattern /register chat_id block
+            if (source.blocks.stream().map(Block::toString).anyMatch(commands[2]::equals)) {
+                long chatId = Long.parseLong(commands[1]);
                 Block block = source.blocks.stream().filter(x -> x.toString().equals(commands[2])).findFirst().get();
-                userRepository.save(registerUserBlock(userRepository.findById(Long.parseLong(commands[1])).get(), block));
-                sendMessage(this, source.ADMIN_CHATID, block + " successfully registered");
+                User user = userRepository.findById(chatId).get();
+                registerUserBlocks(user, block);
+                userRepository.save(user);
+                sortUserBlocks(chatId);
+                sendMessage(this, source.ADMIN_CHATID, block + " is registered");
             }
             return true;
         } else if (messageText.contains("/registerAll") && commands[1].chars().allMatch(Character::isDigit) && chatIds.contains(Long.parseLong(commands[1])) && commands.length == 2) {
-            userRepository.save(registerUserAllBlocks(userRepository.findById(Long.parseLong(commands[1])).get(), source.blocks));
-            sendMessage(this, source.ADMIN_CHATID, "all blocks successfully registered");
+            // gives user any block by pattern /registerAll chat_id
+            long chatId = Long.parseLong(commands[1]);
+            User user = userRepository.findById(chatId).get();
+            RegisterTools.registerUserBlocks(user, source.blocks);
+            userRepository.save(user);
+            sortUserBlocks(chatId);
+            sendMessage(this, source.ADMIN_CHATID, "All blocks are registered");
+            log.info("Admin: all blocks registered chat_id " + chatId);
             return true;
         }
         return false;
     }
 
     private void startCommandReceived(Message message) {
-        String answer = "Привет, " + message.getChat().getFirstName(); //todo text
+        String answer = "Привет, " + message.getChat().getFirstName();
         sendMessage(this, message.getChatId(), answer);
         if (!userRepository.existsById(message.getChatId())) {
             User user = new User();
@@ -216,7 +236,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             user.setBlocks("");
             userRepository.save(user);
         }
-    }
+    } //todo text
 
     private void getUserFiles(long chatId, Block block) {
         // sends all practices by block (it got like "get + block*" where * is a number of block) to user
@@ -229,7 +249,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             }
         }
         sendQuestions(this, chatId, block);
-    }
+    } // done
 
     private void showUserFiles(long chatId) {
         // differs from getUserFiles that sends to user all blocks and practices he bought (no files will be sent)
@@ -251,7 +271,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             sendMessage(this, chatId, joiner.toString(), inlineKeyboardMarkup);
             joiner = new StringJoiner("\n"); //reloads joiner in order to send next block
         }
-    }
+    } //done
 
     public void sortUserBlocks(long chatId) {
         User user = userRepository.findById(chatId).get();
@@ -259,7 +279,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         List<String> blocks_string_sorted = new ArrayList<>(Arrays.stream(blocks_string).flatMap(x -> source.blocks.stream().filter(y -> y.toString().equals(x))).sorted().map(Block::toString).toList());
         user.setBlocks(String.join(",", blocks_string_sorted));
         userRepository.save(user);
-    }
+    } //done
 
     @Override
     public String getBotUsername() {
