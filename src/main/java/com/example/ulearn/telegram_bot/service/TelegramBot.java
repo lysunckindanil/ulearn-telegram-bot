@@ -239,6 +239,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         List<Block> blocks = new ArrayList<>(Arrays.stream(blocks_string).flatMap(x -> source.blocks.stream().filter(y -> y.toString().equals(x))).sorted().toList());
         StringJoiner joiner = new StringJoiner("\n");
         sendMessage(this, chatId, "Ваши практики: ");
+
         //joiner to send messages
         //it sends each name of block and practices separately
         for (Block block : blocks) {
@@ -250,7 +251,12 @@ public class TelegramBot extends TelegramLongPollingBot {
             sendMessage(this, chatId, joiner.toString(), inlineKeyboardMarkup);
             joiner = new StringJoiner("\n"); //reloads joiner in order to send next block
         }
+
+        //saves sorted blocks to db
+        user.setBlocks(String.join(",", blocks.stream().map(Block::toString).toList()));
+        userRepository.save(user);
     }
+
 
     @Override
     public String getBotUsername() {
