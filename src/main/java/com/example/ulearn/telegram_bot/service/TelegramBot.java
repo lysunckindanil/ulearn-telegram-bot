@@ -165,6 +165,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     userRepository.save(registerUserBlock(userRepository.findById(chatId).get(), block));
                     editMessageText.setText(EmojiParser.parseToUnicode("Заказ " + numberOfOrder + " оплачен :white_check_mark:\n" + "Поздравляю! Вы купили практики " + block.inRussian() + "а :sunglasses: \nЧтобы их получить, перейдите в /show"));
                 }
+                sortUserBlocks(chatId);
             } else if (response == -1) {
                 editMessageText.setReplyMarkup(null);
                 editMessageText.setText(EmojiParser.parseToUnicode("Заказ " + numberOfOrder + " отменен :persevere:\nСкорее всего платеж был отменен. Повторите покупку или напишите в поддержку!"));
@@ -233,10 +234,9 @@ public class TelegramBot extends TelegramLongPollingBot {
     private void showUserFiles(long chatId) {
         // differs from getUserFiles that sends to user all blocks and practices he bought (no files will be sent)
         // if there aren't any blocks in database then tells user it's empty, otherwise sends what user has bought
-        // sends them in right order (sorted) and saves to db
         User user = userRepository.findById(chatId).get();
         String[] blocks_string = user.getBlocks().split(","); //get block string split
-        List<Block> blocks = new ArrayList<>(Arrays.stream(blocks_string).flatMap(x -> source.blocks.stream().filter(y -> y.toString().equals(x))).sorted().toList());
+        List<Block> blocks = new ArrayList<>(Arrays.stream(blocks_string).flatMap(x -> source.blocks.stream().filter(y -> y.toString().equals(x))).toList());
         StringJoiner joiner = new StringJoiner("\n");
         sendMessage(this, chatId, "Ваши практики: ");
 
@@ -251,12 +251,15 @@ public class TelegramBot extends TelegramLongPollingBot {
             sendMessage(this, chatId, joiner.toString(), inlineKeyboardMarkup);
             joiner = new StringJoiner("\n"); //reloads joiner in order to send next block
         }
-
-        //saves sorted blocks to db
-        user.setBlocks(String.join(",", blocks.stream().map(Block::toString).toList()));
-        userRepository.save(user);
     }
 
+    public void sortUserBlocks(long chatId) {
+        User user = userRepository.findById(chatId).get();
+        String[] blocks_string = user.getBlocks().split(",");
+        List<String> blocks_string_sorted = new ArrayList<>(Arrays.stream(blocks_string).flatMap(x -> source.blocks.stream().filter(y -> y.toString().equals(x))).sorted().map(Block::toString).toList());
+        user.setBlocks(String.join(",", blocks_string_sorted));
+        userRepository.save(user);
+    }
 
     @Override
     public String getBotUsername() {

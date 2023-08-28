@@ -3,6 +3,7 @@ package com.example.ulearn.telegram_bot.service.tools;
 import com.example.ulearn.telegram_bot.model.Payment;
 import com.example.ulearn.telegram_bot.model.PaymentRepository;
 import com.example.ulearn.telegram_bot.model.UserRepository;
+import com.example.ulearn.telegram_bot.service.TelegramBot;
 import com.example.ulearn.telegram_bot.service.source.Block;
 import com.example.ulearn.telegram_bot.service.source.BotResources;
 import com.vdurmont.emoji.EmojiParser;
@@ -18,7 +19,6 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.springframework.stereotype.Component;
-import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -98,7 +98,7 @@ public class PaymentTools {
         return jsonObjectResponse;
     }
 
-    public void restorePayments(TelegramLongPollingBot bot) {
+    public void restorePayments(TelegramBot bot) {
         List<Payment> paymentList = (List<Payment>) paymentRepository.findAll();
         for (Payment payment : paymentList) {
             if (payment.getStatus().equals("process")) {
@@ -116,6 +116,7 @@ public class PaymentTools {
                             users.save(registerUserBlock(users.findById(chatId).get(), block));
                             text = EmojiParser.parseToUnicode("Заказ " + numberOfOrder + " оплачен :white_check_mark:\n" + "Поздравляю! Вы купили практики " + block.inRussian() + "а :sunglasses: \nЧтобы их получить, перейдите в /show");
                         }
+                        bot.sortUserBlocks(chatId);
                     } else if (response == -1) {
                         text = EmojiParser.parseToUnicode("Заказ " + numberOfOrder + " отменен :persevere:\nСкорее всего платеж был отменен. Повторите покупку или напишите в поддержку!");
                     } else if (response == 0) {
