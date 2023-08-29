@@ -27,6 +27,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 import static com.example.ulearn.telegram_bot.service.tools.PaymentTools.checkPaymentStatusLoop;
@@ -34,6 +35,7 @@ import static com.example.ulearn.telegram_bot.service.tools.PaymentTools.getUrlJ
 import static com.example.ulearn.telegram_bot.service.tools.QuestionsTools.sendQuestions;
 import static com.example.ulearn.telegram_bot.service.tools.RegisterTools.registerUserBlocks;
 import static com.example.ulearn.telegram_bot.service.tools.SendMessageTools.sendMessage;
+import static com.example.ulearn.telegram_bot.service.tools.SerializationTools.serializeToString;
 
 @SuppressWarnings("OptionalGetWithoutIsPresent")
 @Slf4j
@@ -153,12 +155,16 @@ public class TelegramBot extends TelegramLongPollingBot {
             payment.setServer_url(source.SERVER_URL);
             payment.setNumber_of_order(numberOfOrder);
             payment.setDate(new Date(System.currentTimeMillis()).toString());
+            try {
+                payment.setMessage(serializeToString(message));
+            } catch (IOException e) {
+                log.error("Error to serialize message");
+            }
             paymentRepository.save(payment);
 
             int response = checkPaymentStatusLoop(id, source.SERVER_URL, 1800);
 
             if (response == 1) {
-                editMessageText.setReplyMarkup(null);
                 User user = userRepository.findById(chatId).get();
                 if (block == null) {
                     RegisterTools.registerUserBlocks(user, source.blocks);
@@ -173,14 +179,14 @@ public class TelegramBot extends TelegramLongPollingBot {
                 log.info("ChatId " + chatId + " bought block/blocks payment_id " + id);
                 sortUserBlocks(chatId);
             } else if (response == -1) {
-                editMessageText.setReplyMarkup(null);
                 editMessageText.setText(EmojiParser.parseToUnicode("Заказ " + numberOfOrder + " отменен :persevere:\nСкорее всего платеж был отменен. Повторите покупку или напишите в поддержку!"));
                 log.info("ChatId " + chatId + " cancelled payment payment_id " + id);
             } else if (response == 0) {
-                editMessageText.setReplyMarkup(null);
                 editMessageText.setText(EmojiParser.parseToUnicode("Заказ " + numberOfOrder + " отменен :persevere:\nСкорее всего у вас истек срок оплаты. Повторите покупку или напишите в поддержку!"));
                 log.info("ChatId " + chatId + " is out of time payment_id " + id);
             }
+
+            editMessageText.setReplyMarkup(null);
             sendMessage(this, editMessageText, message);
             payment.setStatus("completed");
             paymentRepository.save(payment);

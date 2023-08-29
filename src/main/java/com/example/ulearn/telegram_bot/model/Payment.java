@@ -1,5 +1,6 @@
 package com.example.ulearn.telegram_bot.model;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
@@ -17,5 +18,6 @@ public class Payment {
     private String server_url;
     private String date;
     private String status;
+    @Column(length = 16384)
     private String message;
 }

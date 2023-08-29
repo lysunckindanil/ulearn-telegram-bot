@@ -20,6 +20,8 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.springframework.stereotype.Component;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
+import org.telegram.telegrambots.meta.api.objects.Message;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -28,6 +30,7 @@ import java.util.Map;
 
 import static com.example.ulearn.telegram_bot.service.tools.RegisterTools.registerUserBlocks;
 import static com.example.ulearn.telegram_bot.service.tools.SendMessageTools.sendMessage;
+import static com.example.ulearn.telegram_bot.service.tools.SerializationTools.deserializeFromString;
 
 @SuppressWarnings("OptionalGetWithoutIsPresent")
 @Slf4j
@@ -102,33 +105,44 @@ public class PaymentTools {
         for (Payment payment : paymentList) {
             if (payment.getStatus().equals("process")) {
                 Runnable task = () -> {
-                    Long chatId = payment.getChatId();
+                    Message message = null;
+                    try {
+                        message = (Message) deserializeFromString(payment.getMessage());
+                    } catch (IOException | ClassNotFoundException e) {
+                        log.error("Unable to deserialize message");
+                        return;
+                    }
+                    Long chatId = message.getChatId();
                     int numberOfOrder = payment.getNumber_of_order();
                     int response = checkPaymentStatusLoop(payment.getId(), payment.getServer_url(), 600);
                     String text = null;
+
+                    EditMessageText editMessageText = new EditMessageText();
                     if (response == 1) {
                         if (payment.getBlocks() == null) {
                             User user = userRepository.findById(chatId).get();
                             RegisterTools.registerUserBlocks(user, source.blocks);
                             userRepository.save(user);
-                            text = EmojiParser.parseToUnicode("Заказ " + numberOfOrder + " оплачен :white_check_mark:\n" + "Поздравляю! Вы купили практики всех блоков :sunglasses: \nЧтобы их получить, перейдите в /show");
+                            editMessageText.setText(EmojiParser.parseToUnicode("Заказ " + numberOfOrder + " оплачен :white_check_mark:\n" + "Поздравляю! Вы купили практики всех блоков :sunglasses: \nЧтобы их получить, перейдите в /show"));
                         } else {
                             Block block = source.blocks.stream().filter(x -> x.toString().equals(payment.getBlocks())).findFirst().get();
                             User user = userRepository.findById(chatId).get();
                             registerUserBlocks(user, block);
                             userRepository.save(user);
-                            text = EmojiParser.parseToUnicode("Заказ " + numberOfOrder + " оплачен :white_check_mark:\n" + "Поздравляю! Вы купили практики " + block.inRussian() + "а :sunglasses: \nЧтобы их получить, перейдите в /show");
+                            editMessageText.setText(EmojiParser.parseToUnicode("Заказ " + numberOfOrder + " оплачен :white_check_mark:\n" + "Поздравляю! Вы купили практики " + block.inRussian() + "а :sunglasses: \nЧтобы их получить, перейдите в /show"));
                         }
                         log.info("Restore chatId " + chatId + " bought block/blocks payment_id " + payment.getId());
                         bot.sortUserBlocks(chatId);
                     } else if (response == -1) {
-                        text = EmojiParser.parseToUnicode("Заказ " + numberOfOrder + " отменен :persevere:\nСкорее всего платеж был отменен. Повторите покупку или напишите в поддержку!");
+                        editMessageText.setText(EmojiParser.parseToUnicode("Заказ " + numberOfOrder + " отменен :persevere:\nСкорее всего платеж был отменен. Повторите покупку или напишите в поддержку!"));
                         log.info("Restore chatId " + chatId + " cancelled payment payment_id " + payment.getId());
                     } else if (response == 0) {
-                        text = EmojiParser.parseToUnicode("Заказ " + numberOfOrder + " отменен :persevere:\nСкорее всего у вас истек срок оплаты. Повторите покупку или напишите в поддержку!");
+                        editMessageText.setText(EmojiParser.parseToUnicode("Заказ " + numberOfOrder + " отменен :persevere:\nСкорее всего у вас истек срок оплаты. Повторите покупку или напишите в поддержку!"));
                         log.info("Restore chatId " + chatId + " is out of time payment_id " + payment.getId());
                     }
-                    sendMessage(bot, chatId, text);
+
+                    editMessageText.setReplyMarkup(null);
+                    sendMessage(bot, editMessageText, message);
                     payment.setStatus("completed with restore");
                     paymentRepository.save(payment);
                 };
@@ -137,4 +151,5 @@ public class PaymentTools {
             }
         }
     }
+
 }
