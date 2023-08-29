@@ -42,7 +42,8 @@ public class RegisterTools {
     private static void register(User user, Block block) {
         // transfer files from resources to user folder and adds information to database
         String files;
-        if (block.getCodeUnits().isEmpty()) files = ""; // if there are no code units then there are no files and nothing to transfer
+        if (block.getCodeUnits().isEmpty())
+            files = ""; // if there are no code units then there are no files and nothing to transfer
         else
             files = transferDataToUserFiles(user.getChatId(), block.getCodeUnits()); //transfer files from resources to user folder
         String user_blocks = user.getBlocks();
@@ -60,6 +61,7 @@ public class RegisterTools {
         // moves or copies files to user folder
         StringJoiner joiner = new StringJoiner(",");
         Path path = Paths.get(UsersCodeFiles + File.separator + chatId);
+
         // creates user directory if there isn't any
         if (Files.notExists(path)) {
             try {
@@ -68,7 +70,8 @@ public class RegisterTools {
                 log.error("Unable to create directory " + path);
             }
         }
-        // moves code units to the directory
+
+        // moves or copies (based on whether it's FormattedCodeUnit or not) code units from generator folders to the directory
         for (CodeUnit codeUnit : codeUnits) {
             File file = codeUnit.getFile();
             joiner.add(path + File.separator + file.getName());

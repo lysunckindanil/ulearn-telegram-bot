@@ -138,14 +138,16 @@ public class TelegramBot extends TelegramLongPollingBot {
 
             String id = (String) urlJson.get("payment_id");
             String url = (String) urlJson.get("payment_url");
-
             String description = EmojiParser.parseToUnicode("Заказ " + numberOfOrder + " создан :white_check_mark:") + "\n" + (block != null ? source.getOneBlockDescriptionPaymentText(block) : source.getAllBlocksDescriptionPaymentText());
-            //sending information about order to user
+
+            // sends information about order to user, with link to pay
             EditMessageText editMessageText = new EditMessageText();
             editMessageText.setText(description);
             editMessageText.setReplyMarkup(source.getOneButtonKeyboardMarkup("Оплатить", url, null));
             sendMessage(this, editMessageText, message);
             log.info("Created order " + numberOfOrder + " chatId " + chatId + " payment_id " + id);
+
+            // writes payment info to database
             // process of checking whether payment paid or not
             Payment payment = new Payment();
             payment.setId(id);
@@ -155,6 +157,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             payment.setServer_url(source.SERVER_URL);
             payment.setNumber_of_order(numberOfOrder);
             payment.setDate(new Date(System.currentTimeMillis()).toString());
+            // serializes message in order to have an ability to delete link if bot is broken, and we need somehow to restore payment (restorePayment method)
             try {
                 payment.setMessage(serializeToString(message));
             } catch (IOException e) {
@@ -162,8 +165,9 @@ public class TelegramBot extends TelegramLongPollingBot {
             }
             paymentRepository.save(payment);
 
+            // gets response whether user has paid or not
             int response = checkPaymentStatusLoop(id, source.SERVER_URL, 1800);
-
+            // if response got, analyses it
             if (response == 1) {
                 User user = userRepository.findById(chatId).get();
                 if (block == null) {
@@ -186,8 +190,11 @@ public class TelegramBot extends TelegramLongPollingBot {
                 log.info("ChatId " + chatId + " is out of time payment_id " + id);
             }
 
+            // deletes link in replyMarkup in order it wouldn't be available to pay after out of time
             editMessageText.setReplyMarkup(null);
             sendMessage(this, editMessageText, message);
+
+            // status completed if all's gone right no matter was it paid, cancelled or out of time
             payment.setStatus("completed");
             paymentRepository.save(payment);
         };
