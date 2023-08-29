@@ -41,14 +41,17 @@ public class RegisterTools {
 
     private static void register(User user, Block block) {
         // transfer files from resources to user folder and adds information to database
-        String files = transferDataToUserFiles(user.getChatId(), block.getCodeUnits()); //transfer files from resources to user folder
-        String user_files = user.getFiles();
+        String files;
+        if (block.getCodeUnits().isEmpty()) files = ""; // if there are no code units then there are no files and nothing to transfer
+        else
+            files = transferDataToUserFiles(user.getChatId(), block.getCodeUnits()); //transfer files from resources to user folder
+        String user_blocks = user.getBlocks();
         // adds strings to database decided whether user data is empty or not
-        if (user_files.isEmpty()) {
+        if (user_blocks.isEmpty()) {
             user.setFiles(files);
             user.setBlocks(block.toString());
         } else {
-            user.setFiles(user_files + "," + files);
+            user.setFiles(user_blocks + "," + files);
             user.setBlocks(user.getBlocks() + "," + block);
         }
     }

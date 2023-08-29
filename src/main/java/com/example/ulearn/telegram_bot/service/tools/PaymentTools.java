@@ -27,7 +27,6 @@ import java.util.List;
 import java.util.Map;
 
 import static com.example.ulearn.telegram_bot.service.tools.RegisterTools.registerUserBlocks;
-import static com.example.ulearn.telegram_bot.service.tools.RegisterTools.registerUserBlocks;
 import static com.example.ulearn.telegram_bot.service.tools.SendMessageTools.sendMessage;
 
 @SuppressWarnings("OptionalGetWithoutIsPresent")
@@ -52,17 +51,16 @@ public class PaymentTools {
         return sendJson(jsonToGetPayment, url);
     }
 
-    public static int checkPaymentStatusLoop(String id, String url) {
+    public static int checkPaymentStatusLoop(String id, String url, int limit) {
         Map<String, String> jsonMapToGetStatus = new HashMap<>();
         jsonMapToGetStatus.put("bot_event", "check_id");
         jsonMapToGetStatus.put("id", String.valueOf(id));
         JSONObject jsonToGetStatus = new JSONObject(jsonMapToGetStatus); //bot_event, description, price
         // loop of sending requests
-        int limit = 600;
         for (int i = 0; i < limit; i++) {
             String response = "";
             try {
-                Thread.sleep(3000);
+                Thread.sleep(1000);
                 response = (String) sendJson(jsonToGetStatus, url).get("checking_result");
             } catch (InterruptedException e) {
                 log.error("Thread sleep error");
@@ -106,7 +104,7 @@ public class PaymentTools {
                 Runnable task = () -> {
                     Long chatId = payment.getChatId();
                     int numberOfOrder = payment.getNumber_of_order();
-                    int response = checkPaymentStatusLoop(payment.getId(), payment.getServer_url());
+                    int response = checkPaymentStatusLoop(payment.getId(), payment.getServer_url(), 600);
                     String text = null;
                     if (response == 1) {
                         if (payment.getBlocks() == null) {
@@ -128,7 +126,7 @@ public class PaymentTools {
                         text = EmojiParser.parseToUnicode("Заказ " + numberOfOrder + " отменен :persevere:\nСкорее всего у вас истек срок оплаты. Повторите покупку или напишите в поддержку!");
                     }
                     sendMessage(bot, chatId, text);
-                    payment.setStatus("completed");
+                    payment.setStatus("completed with restore");
                     paymentRepository.save(payment);
                 };
                 Thread thread = new Thread(task);

@@ -35,6 +35,7 @@ public class Generator {
     }
 
     private static String readFile(Path file) {
+        // reads file to string
         StringBuilder code = new StringBuilder();
         try (FileReader fileReader = new FileReader(file.toFile())) {
             while (fileReader.ready()) {
@@ -47,6 +48,7 @@ public class Generator {
     }
 
     private static List<String> getFormattedStrings(Path pattern, String original, int limit) {
+        // load replacements
         List<List<String>> replacements = new ArrayList<>();
         List<String> patternLines;
         try {

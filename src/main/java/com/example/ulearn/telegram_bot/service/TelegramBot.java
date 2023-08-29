@@ -91,7 +91,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             }
 
         } else if (update.hasCallbackQuery()) ifCallbackQueryGot(update.getCallbackQuery());
-    } //done
+    }
 
     private void ifCallbackQueryGot(CallbackQuery callbackQuery) {
         String callBackData = callbackQuery.getData();
@@ -121,10 +121,10 @@ public class TelegramBot extends TelegramLongPollingBot {
             getUserFiles(chatId, source.blocks.stream().filter(x -> ("get" + x.toString()).equals(callBackData)).findFirst().get());
             sendMessage(this, editMessageText, message);
         }
-    } //done
+    }
 
     private void buy(long chatId, Block block, Message message) {
-        //todo change text
+
         Runnable task = () -> {
             // order description
             int price = block == null ? source.PRICE_ALL_BLOCKS : source.PRICE_ONE_BLOCK;
@@ -155,7 +155,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             payment.setDate(new Date(System.currentTimeMillis()).toString());
             paymentRepository.save(payment);
 
-            int response = checkPaymentStatusLoop(id, source.SERVER_URL);
+            int response = checkPaymentStatusLoop(id, source.SERVER_URL, 1800);
 
             if (response == 1) {
                 editMessageText.setReplyMarkup(null);
@@ -179,11 +179,12 @@ public class TelegramBot extends TelegramLongPollingBot {
                 editMessageText.setText(EmojiParser.parseToUnicode("Заказ " + numberOfOrder + " отменен :persevere:\nСкорее всего у вас истек срок оплаты. Повторите покупку или напишите в поддержку!"));
             }
             sendMessage(this, editMessageText, message);
-            paymentRepository.delete(paymentRepository.findById(numberOfOrder).get());
+            payment.setStatus("completed");
+            paymentRepository.save(payment);
         };
         Thread thread = new Thread(task);
         thread.start();
-    }
+    } //todo change text
 
     private boolean adminCommandReceived(String messageText) {
         // here admin commands
@@ -234,22 +235,27 @@ public class TelegramBot extends TelegramLongPollingBot {
             user.setUserName(message.getChat().getUserName());
             user.setFiles("");
             user.setBlocks("");
+            // block1 with questions by default
+            RegisterTools.registerUserBlocks(user, source.blocks.stream().filter(x -> x.toString().equals("block1")).findFirst().get());
             userRepository.save(user);
         }
-    } //todo text
+    } //todo change text
 
     private void getUserFiles(long chatId, Block block) {
         // sends all practices by block (it got like "get + block*" where * is a number of block) to user
-        List<String> codeUnitNames = source.blocks.stream().filter(x -> x.toString().equals(block.toString())).findFirst().map(Block::getCodeUnits).get().stream().map(CodeUnit::getName).toList();
-        List<File> files = Arrays.stream(userRepository.findById(chatId).get().getFiles().split(",")).map(File::new).toList();
-        sendMessage(this, chatId, "Ваши практики " + block.inRussian() + "а:");
-        for (File file : files) {
-            if (codeUnitNames.stream().anyMatch(x -> file.getName().startsWith(x))) {
-                sendMessage(this, chatId, file);
+        // if its empty sends only questions
+        if (!block.getCodeUnits().isEmpty()) {
+            List<String> codeUnitNames = source.blocks.stream().filter(x -> x.toString().equals(block.toString())).findFirst().map(Block::getCodeUnits).get().stream().map(CodeUnit::getName).toList();
+            List<File> files = Arrays.stream(userRepository.findById(chatId).get().getFiles().split(",")).map(File::new).toList();
+            sendMessage(this, chatId, "Ваши практики " + block.inRussian() + "а:");
+            for (File file : files) {
+                if (codeUnitNames.stream().anyMatch(x -> file.getName().startsWith(x))) {
+                    sendMessage(this, chatId, file);
+                }
             }
         }
         sendQuestions(this, chatId, block);
-    } // done
+    }
 
     private void showUserFiles(long chatId) {
         // differs from getUserFiles that sends to user all blocks and practices he bought (no files will be sent)
@@ -264,14 +270,18 @@ public class TelegramBot extends TelegramLongPollingBot {
         //it sends each name of block and practices separately
         for (Block block : blocks) {
             joiner.add("*" + block.inRussian() + "*"); //it makes it look like *блок i*
-            for (CodeUnit codeUnit : block.getCodeUnits()) {
-                joiner.add(codeUnit.getName());
+            // if there are no code units then sends other message
+            if (block.getCodeUnits().isEmpty()) joiner.add("Только контрольные вопросы");
+            else {
+                for (CodeUnit codeUnit : block.getCodeUnits()) {
+                    joiner.add(codeUnit.getName());
+                }
             }
             InlineKeyboardMarkup inlineKeyboardMarkup = source.getOneButtonKeyboardMarkup("Получить", null, "get" + block);
             sendMessage(this, chatId, joiner.toString(), inlineKeyboardMarkup);
             joiner = new StringJoiner("\n"); //reloads joiner in order to send next block
         }
-    } //done
+    }
 
     public void sortUserBlocks(long chatId) {
         User user = userRepository.findById(chatId).get();
@@ -279,7 +289,8 @@ public class TelegramBot extends TelegramLongPollingBot {
         List<String> blocks_string_sorted = new ArrayList<>(Arrays.stream(blocks_string).flatMap(x -> source.blocks.stream().filter(y -> y.toString().equals(x))).sorted().map(Block::toString).toList());
         user.setBlocks(String.join(",", blocks_string_sorted));
         userRepository.save(user);
-    } //done
+    }
+
 
     @Override
     public String getBotUsername() {
