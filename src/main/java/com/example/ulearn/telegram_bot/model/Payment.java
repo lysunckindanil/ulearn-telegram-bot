@@ -17,4 +17,5 @@ public class Payment {
     private String server_url;
     private String date;
     private String status;
+    private String message;
 }

@@ -143,7 +143,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             editMessageText.setText(description);
             editMessageText.setReplyMarkup(source.getOneButtonKeyboardMarkup("Оплатить", url, null));
             sendMessage(this, editMessageText, message);
-
+            log.info("Created order " + numberOfOrder + " chatId " + chatId + " payment_id " + id);
             // process of checking whether payment paid or not
             Payment payment = new Payment();
             payment.setId(id);
@@ -170,13 +170,16 @@ public class TelegramBot extends TelegramLongPollingBot {
                     userRepository.save(user);
                     editMessageText.setText(EmojiParser.parseToUnicode("Заказ " + numberOfOrder + " оплачен :white_check_mark:\n" + "Поздравляю! Вы купили практики " + block.inRussian() + "а :sunglasses: \nЧтобы их получить, перейдите в /show"));
                 }
+                log.info("ChatId " + chatId + " bought block/blocks payment_id " + id);
                 sortUserBlocks(chatId);
             } else if (response == -1) {
                 editMessageText.setReplyMarkup(null);
                 editMessageText.setText(EmojiParser.parseToUnicode("Заказ " + numberOfOrder + " отменен :persevere:\nСкорее всего платеж был отменен. Повторите покупку или напишите в поддержку!"));
+                log.info("ChatId " + chatId + " cancelled payment payment_id " + id);
             } else if (response == 0) {
                 editMessageText.setReplyMarkup(null);
                 editMessageText.setText(EmojiParser.parseToUnicode("Заказ " + numberOfOrder + " отменен :persevere:\nСкорее всего у вас истек срок оплаты. Повторите покупку или напишите в поддержку!"));
+                log.info("ChatId " + chatId + " is out of time payment_id " + id);
             }
             sendMessage(this, editMessageText, message);
             payment.setStatus("completed");

@@ -119,11 +119,14 @@ public class PaymentTools {
                             userRepository.save(user);
                             text = EmojiParser.parseToUnicode("Заказ " + numberOfOrder + " оплачен :white_check_mark:\n" + "Поздравляю! Вы купили практики " + block.inRussian() + "а :sunglasses: \nЧтобы их получить, перейдите в /show");
                         }
+                        log.info("Restore chatId " + chatId + " bought block/blocks payment_id " + payment.getId());
                         bot.sortUserBlocks(chatId);
                     } else if (response == -1) {
                         text = EmojiParser.parseToUnicode("Заказ " + numberOfOrder + " отменен :persevere:\nСкорее всего платеж был отменен. Повторите покупку или напишите в поддержку!");
+                        log.info("Restore chatId " + chatId + " cancelled payment payment_id " + payment.getId());
                     } else if (response == 0) {
                         text = EmojiParser.parseToUnicode("Заказ " + numberOfOrder + " отменен :persevere:\nСкорее всего у вас истек срок оплаты. Повторите покупку или напишите в поддержку!");
+                        log.info("Restore chatId " + chatId + " is out of time payment_id " + payment.getId());
                     }
                     sendMessage(bot, chatId, text);
                     payment.setStatus("completed with restore");
