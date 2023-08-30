@@ -14,9 +14,9 @@ public class User {
     @Id
     private Long chatId;
     private String userName;
-    @Column(length = 8096)
+    @Column(length = 8192)
     private String files;
-    @Column(length = 8096)
+    @Column(length = 8192)
     private String blocks;
 
     @Override

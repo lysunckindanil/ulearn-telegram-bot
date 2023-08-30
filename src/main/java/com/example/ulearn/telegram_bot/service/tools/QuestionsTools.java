@@ -10,14 +10,18 @@ import java.util.Objects;
 import static com.example.ulearn.telegram_bot.service.tools.SendMessageTools.sendMessage;
 
 public class QuestionsTools {
+    public static String QUESTIONS_PATH = "src" + File.separator + "main" + File.separator + "resources" + File.separator + "CodeData" + File.separator + "UlearnTestQuestions";
+
     public static void sendQuestions(TelegramLongPollingBot bot, long chatId, Block block) {
-        List<File> files = getFilesByBlock(block.toString());
+        // sends ulearn questions to user
+        List<File> files = getFilesByBlock(block.toString()); // get list of files
         String caption = "Ваши контрольные вопросы " + block.inRussian() + "а";
-        if (files != null) sendMessage(bot, chatId, files, caption);
+        if (files != null) sendMessage(bot, chatId, files, caption); // sends media group to user
     }
 
     private static List<File> getFilesByBlock(String block) {
-        File dir = new File("src/main/resources/CodeData/UlearnTestQuestions" + File.separator + block);
+        // finds them in a directory and returns them in a list
+        File dir = new File(QUESTIONS_PATH + File.separator + block);
         if (dir.isDirectory()) {
             return List.of(Objects.requireNonNull(dir.listFiles()));
         }

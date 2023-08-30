@@ -34,18 +34,18 @@ public class BotResources {
     public long ADMIN_CHATID;
 
     {
-        for (int i = 2; i < 11; i++) {
+        for (int i = 1; i < 11; i++) {
             blocks.add(new Block(i));
         }
-        blocks.get(0).addAllCodeUnits(List.of(getDefFCU("Calculator"), getDefCU("check"), getDefCU("calculate"), getDefCU("getRevertString"))); //2
-        blocks.get(1).addAllCodeUnits(List.of(getDefFCU("Hospital"), getDefFCU("TodoList"), getDefCU("getTwoDimensionalArray"))); //3
-        blocks.get(2).addAllCodeUnits(List.of(getDefFCU("School"), getDefFCU("PhoneBook"), getDefCU("Line"), getDefCU("Client"))); //4
-        blocks.get(3).addAllCodeUnits(List.of(getDefFCU("AbstractLogger"), getDefCU("TimeUnit"), getDefCU("Animal"))); //5
-        blocks.get(4).addAllCodeUnits(List.of(getDefFCU("Customers"), getDefCU("Handler"))); //6
-        blocks.get(5).addAllCodeUnits(List.of(getDefFCU("Utils"), getDefCU("FileUtils"), getDefCU("ImageResizer"))); //7
-        blocks.get(6).addAllCodeUnits(List.of(getDefFCU("Parser"), getDefCU("Buffer"))); //8
-        blocks.get(7).addAllCodeUnits(List.of(getDefFCU("Employees"))); //9
-        blocks.get(8).addAllCodeUnits(List.of(getDefFCU("Airport"))); //10
+        blocks.get(1).addAllCodeUnits(List.of(getDefFCU("Calculator"), getDefCU("check"), getDefCU("calculate"), getDefCU("getRevertString"))); //2
+        blocks.get(2).addAllCodeUnits(List.of(getDefFCU("Hospital"), getDefFCU("TodoList"), getDefCU("getTwoDimensionalArray"))); //3
+        blocks.get(3).addAllCodeUnits(List.of(getDefFCU("School"), getDefFCU("PhoneBook"), getDefCU("Line"), getDefCU("Client"))); //4
+        blocks.get(4).addAllCodeUnits(List.of(getDefFCU("AbstractLogger"), getDefCU("TimeUnit"), getDefCU("Animal"))); //5
+        blocks.get(5).addAllCodeUnits(List.of(getDefFCU("Customers"), getDefCU("Handler"))); //6
+        blocks.get(6).addAllCodeUnits(List.of(getDefFCU("Utils"), getDefCU("FileUtils"), getDefCU("ImageResizer"))); //7
+        blocks.get(7).addAllCodeUnits(List.of(getDefFCU("Parser"), getDefCU("Buffer"))); //8
+        blocks.get(8).addAllCodeUnits(List.of(getDefFCU("Employees"))); //9
+        blocks.get(9).addAllCodeUnits(List.of(getDefFCU("Airport"))); //10
     }
 
     private static FormattedCodeUnit getDefFCU(String name) {
@@ -63,7 +63,6 @@ public class BotResources {
         File file = new File(src + File.separator + "CodeOriginalFiles" + File.separator + file_name);
         return new CodeUnit(file);
     }
-
 
     public InlineKeyboardMarkup getBuyMenu() {
         InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();

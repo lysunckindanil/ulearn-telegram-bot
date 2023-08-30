@@ -19,7 +19,9 @@ import java.util.List;
 
 @Slf4j
 public class SendMessageTools {
-
+    /**
+     * Send text message
+     */
     public static void sendMessage(TelegramLongPollingBot bot, long chatId, String text) {
         SendMessage message = new SendMessage();
         message.setChatId(String.valueOf(chatId));
@@ -31,6 +33,10 @@ public class SendMessageTools {
         }
     }
 
+
+    /**
+     * Send text message with InlineKeyboardMarkup
+     */
     public static void sendMessage(TelegramLongPollingBot bot, long chatId, String text, InlineKeyboardMarkup inlineKeyboardMarkup) {
         SendMessage message = new SendMessage();
         message.setChatId(String.valueOf(chatId));
@@ -43,6 +49,10 @@ public class SendMessageTools {
         }
     }
 
+
+    /**
+     * Send text message with File
+     */
     public static void sendMessage(TelegramLongPollingBot bot, long chatId, File file) {
         SendDocument message = new SendDocument();
         message.setChatId(String.valueOf(chatId));
@@ -54,6 +64,10 @@ public class SendMessageTools {
         }
     }
 
+
+    /**
+     * Send EditTextMessage
+     */
     public static void sendMessage(TelegramLongPollingBot bot, EditMessageText editMessageText, Message message) {
         int messageId = message.getMessageId();
         long chatId = message.getChatId();
@@ -66,6 +80,10 @@ public class SendMessageTools {
         }
     }
 
+
+    /**
+     * Send text message with MediaGroup
+     */
     public static void sendMessage(TelegramLongPollingBot bot, long chatId, List<File> files, String caption) {
         SendMediaGroup mediaGroup = new SendMediaGroup();
         mediaGroup.setChatId(String.valueOf(chatId));
