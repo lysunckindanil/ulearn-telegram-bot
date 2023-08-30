@@ -48,6 +48,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     @Autowired
     public TelegramBot(BotConfig config, UserRepository userRepository, BotResources source, PaymentRepository paymentRepository, PaymentTools paymentTools) {
+        super(config.getToken());
         this.config = config;
         this.userRepository = userRepository;
         this.source = source;
@@ -126,7 +127,6 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private void buy(long chatId, Block block, Message message) {
-
         Runnable task = () -> {
             // order description
             int price = block == null ? source.PRICE_ALL_BLOCKS : source.PRICE_ONE_BLOCK;
@@ -311,11 +311,6 @@ public class TelegramBot extends TelegramLongPollingBot {
     @Override
     public String getBotUsername() {
         return config.getName();
-    }
-
-    @Override
-    public String getBotToken() {
-        return config.getToken();
     }
 
 }
