@@ -13,6 +13,7 @@ import static com.example.ulearn.telegram_bot.service.tools.PaymentTools.sendJso
 @SpringBootApplication
 @Slf4j
 public class UlearnApplication {
+
     public static void main(String[] args) {
         if (checkServer()) {
             SpringApplication.run(UlearnApplication.class, args);
