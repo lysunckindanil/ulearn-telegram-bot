@@ -73,7 +73,7 @@ public class RegisterTools {
 
         // moves or copies (based on whether it's FormattedCodeUnit or not) code units from generator folders to the directory
         for (CodeUnit codeUnit : codeUnits) {
-            File file = codeUnit.getFile();
+            File file = codeUnit.getOriginal();
             joiner.add(path + File.separator + file.getName());
             try {
                 if (codeUnit instanceof FormattedCodeUnit) {

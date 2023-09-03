@@ -9,11 +9,11 @@ import java.io.File;
 @Getter
 public class CodeUnit {
     @Getter
-    private final File file;
+    protected final File original;
     private final String name;
 
     public CodeUnit(File file) {
-        this.file = file;
+        this.original = file;
         this.name = FilenameUtils.removeExtension(file.getName());
     }
 

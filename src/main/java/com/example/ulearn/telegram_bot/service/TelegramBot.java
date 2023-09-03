@@ -45,14 +45,18 @@ public class TelegramBot extends TelegramLongPollingBot {
     private final UserRepository userRepository;
     private final PaymentRepository paymentRepository;
     private final BotResources source;
+    private final BlockService blockService;
 
     @Autowired
-    public TelegramBot(BotConfig config, UserRepository userRepository, BotResources source, PaymentRepository paymentRepository, PaymentTools paymentTools) {
+    public TelegramBot(BotConfig config, UserRepository userRepository, BotResources source, PaymentRepository paymentRepository, PaymentTools paymentTools, BlockService blockService) {
         super(config.getToken());
         this.config = config;
         this.userRepository = userRepository;
         this.source = source;
         this.paymentRepository = paymentRepository;
+        this.blockService = blockService;
+        blockService.loadFromRepo();
+        log.error(blockService.getBlocks().toString());
         paymentTools.restorePayments(this);
         List<BotCommand> listOfCommands = new ArrayList<>();
         listOfCommands.add(new BotCommand("/show", "Показать купленные блоки"));
@@ -81,7 +85,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     else showUserFiles(chatId);
                 }
                 case "/buy" -> {
-                    if (userRepository.findById(chatId).get().getBlocks().split(",").length == source.blocks.size()) {
+                    if (userRepository.findById(chatId).get().getBlocks().split(",").length == blockService.getBlocks().size()) {
                         String text = EmojiParser.parseToUnicode("У вас уже куплены все блоки, вы большой молодец :blush:");
                         sendMessage(this, chatId, text);
                     } else sendMessage(this, chatId, source.getChoosingTwoOptionsText(), source.getBuyMenu());
@@ -115,13 +119,13 @@ public class TelegramBot extends TelegramLongPollingBot {
                 editMessageText.setText(EmojiParser.parseToUnicode("У вас уже куплен этот блок :face_with_monocle:"));
                 sendMessage(this, editMessageText, message);
             } else {
-                Block block = source.blocks.stream().filter(x -> x.toString().equals(callBackData)).findFirst().get();
+                Block block = blockService.getBlocks().stream().filter(x -> x.toString().equals(callBackData)).findFirst().get();
                 buy(chatId, block, message);
             }
         } else if (callBackData.startsWith("get")) {
             // callBack on /show -> get any block command
             editMessageText.setText("Получено!");
-            getUserFiles(chatId, source.blocks.stream().filter(x -> ("get" + x.toString()).equals(callBackData)).findFirst().get());
+            getUserFiles(chatId, blockService.getBlocks().stream().filter(x -> ("get" + x.toString()).equals(callBackData)).findFirst().get());
             sendMessage(this, editMessageText, message);
         }
     }
@@ -171,7 +175,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             if (response == 1) {
                 User user = userRepository.findById(chatId).get();
                 if (block == null) {
-                    RegisterTools.registerUserBlocks(user, source.blocks);
+                    RegisterTools.registerUserBlocks(user, blockService.getBlocks());
                     userRepository.save(user);
                     editMessageText.setText(EmojiParser.parseToUnicode("Заказ " + numberOfOrder + " оплачен :white_check_mark:\n" + "Поздравляю! Вы купили практики всех блоков :sunglasses: \nЧтобы их получить, перейдите в /show"));
 
@@ -218,9 +222,9 @@ public class TelegramBot extends TelegramLongPollingBot {
             return true;
         } else if (messageText.contains("/register") && commands[1].chars().allMatch(Character::isDigit) && chatIds.contains(Long.parseLong(commands[1])) && commands.length == 3) {
             // gives any user block by pattern /register chat_id block
-            if (source.blocks.stream().map(Block::toString).anyMatch(commands[2]::equals)) {
+            if (blockService.getBlocks().stream().map(Block::toString).anyMatch(commands[2]::equals)) {
                 long chatId = Long.parseLong(commands[1]);
-                Block block = source.blocks.stream().filter(x -> x.toString().equals(commands[2])).findFirst().get();
+                Block block = blockService.getBlocks().stream().filter(x -> x.toString().equals(commands[2])).findFirst().get();
                 User user = userRepository.findById(chatId).get();
                 registerUserBlocks(user, block);
                 userRepository.save(user);
@@ -232,7 +236,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             // gives user any block by pattern /registerAll chat_id
             long chatId = Long.parseLong(commands[1]);
             User user = userRepository.findById(chatId).get();
-            RegisterTools.registerUserBlocks(user, source.blocks);
+            RegisterTools.registerUserBlocks(user, blockService.getBlocks());
             userRepository.save(user);
             sortUserBlocks(chatId);
             sendMessage(this, source.ADMIN_CHATID, "All blocks are registered");
@@ -252,7 +256,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             user.setFiles("");
             user.setBlocks("");
             // block1 with questions by default
-            RegisterTools.registerUserBlocks(user, source.blocks.stream().filter(x -> x.toString().equals("block1")).findFirst().get());
+            RegisterTools.registerUserBlocks(user, blockService.getBlocks().stream().filter(x -> x.toString().equals("block1")).findFirst().get());
             userRepository.save(user);
         }
     } //todo change text
@@ -261,7 +265,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         // sends all practices by block (it got like "get + block*" where * is a number of block) to user
         // if its empty sends only questions
         if (!block.getCodeUnits().isEmpty()) {
-            List<String> codeUnitNames = source.blocks.stream().filter(x -> x.toString().equals(block.toString())).findFirst().map(Block::getCodeUnits).get().stream().map(CodeUnit::getName).toList();
+            List<String> codeUnitNames = blockService.getBlocks().stream().filter(x -> x.toString().equals(block.toString())).findFirst().map(Block::getCodeUnits).get().stream().map(CodeUnit::getName).toList();
             List<File> files = Arrays.stream(userRepository.findById(chatId).get().getFiles().split(",")).map(File::new).toList();
             sendMessage(this, chatId, "Ваши практики " + block.inRussian() + "а:");
             for (File file : files) {
@@ -278,7 +282,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         // if there aren't any blocks in database then tells user it's empty, otherwise sends what user has bought
         User user = userRepository.findById(chatId).get();
         String[] blocks_string = user.getBlocks().split(","); //get block string split
-        List<Block> blocks = new ArrayList<>(Arrays.stream(blocks_string).flatMap(x -> source.blocks.stream().filter(y -> y.toString().equals(x))).toList());
+        List<Block> blocks = new ArrayList<>(Arrays.stream(blocks_string).flatMap(x -> blockService.getBlocks().stream().filter(y -> y.toString().equals(x))).toList());
         StringJoiner joiner = new StringJoiner("\n");
         sendMessage(this, chatId, "Ваши практики: ");
 
@@ -302,7 +306,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     public void sortUserBlocks(long chatId) {
         User user = userRepository.findById(chatId).get();
         String[] blocks_string = user.getBlocks().split(",");
-        List<String> blocks_string_sorted = new ArrayList<>(Arrays.stream(blocks_string).flatMap(x -> source.blocks.stream().filter(y -> y.toString().equals(x))).sorted().map(Block::toString).toList());
+        List<String> blocks_string_sorted = new ArrayList<>(Arrays.stream(blocks_string).flatMap(x -> blockService.getBlocks().stream().filter(y -> y.toString().equals(x))).sorted().map(Block::toString).toList());
         user.setBlocks(String.join(",", blocks_string_sorted));
         userRepository.save(user);
     }

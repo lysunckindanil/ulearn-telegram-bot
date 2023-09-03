@@ -16,22 +16,20 @@ import static com.example.ulearn.generator.engine.Generator.generate;
 @Getter
 public class FormattedCodeUnit extends CodeUnit {
 
-    private final Path original;
     private final Path pattern;
     private final Path destination;
 
     public FormattedCodeUnit(File original, File pattern, File destination) {
         super(original);
-        this.original = original.toPath();
         this.pattern = pattern.toPath();
         this.destination = destination.toPath();
     }
 
     public File getFile() {
-        Path dir = Paths.get(destination + File.separator + FilenameUtils.removeExtension(original.getFileName().toString()));
+        Path dir = Paths.get(destination + File.separator + FilenameUtils.removeExtension(original.getName()));
         if (isDirEmpty(dir)) {
             try {
-                generate(original, pattern, destination);
+                generate(original.toPath(), pattern, destination);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

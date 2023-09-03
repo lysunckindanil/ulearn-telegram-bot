@@ -4,6 +4,7 @@ import com.example.ulearn.telegram_bot.model.Payment;
 import com.example.ulearn.telegram_bot.model.PaymentRepository;
 import com.example.ulearn.telegram_bot.model.User;
 import com.example.ulearn.telegram_bot.model.UserRepository;
+import com.example.ulearn.telegram_bot.service.BlockService;
 import com.example.ulearn.telegram_bot.service.TelegramBot;
 import com.example.ulearn.telegram_bot.service.source.Block;
 import com.example.ulearn.telegram_bot.service.source.BotResources;
@@ -42,6 +43,7 @@ public class PaymentTools {
     private final PaymentRepository paymentRepository;
     private final UserRepository userRepository;
     private final BotResources source;
+    private final BlockService blockService;
 
     public static JSONObject getUrlJson(String payment_description, int price, String url) {
         // creates json request to get link for payment
@@ -133,11 +135,11 @@ public class PaymentTools {
                     if (response == 1) {
                         if (payment.getBlocks() == null) {
                             User user = userRepository.findById(chatId).get();
-                            RegisterTools.registerUserBlocks(user, source.blocks);
+                            RegisterTools.registerUserBlocks(user, blockService.getBlocks());
                             userRepository.save(user);
                             editMessageText.setText(EmojiParser.parseToUnicode("Заказ " + numberOfOrder + " оплачен :white_check_mark:\n" + "Поздравляю! Вы купили практики всех блоков :sunglasses: \nЧтобы их получить, перейдите в /show"));
                         } else {
-                            Block block = source.blocks.stream().filter(x -> x.toString().equals(payment.getBlocks())).findFirst().get();
+                            Block block = blockService.getBlocks().stream().filter(x -> x.toString().equals(payment.getBlocks())).findFirst().get();
                             User user = userRepository.findById(chatId).get();
                             registerUserBlocks(user, block);
                             userRepository.save(user);
