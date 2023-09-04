@@ -1,4 +1,4 @@
-package com.example.ulearn.telegram_bot.model.untis;
+package com.example.ulearn.telegram_bot.model;
 
 import com.example.ulearn.telegram_bot.model.Block;
 import jakarta.persistence.*;

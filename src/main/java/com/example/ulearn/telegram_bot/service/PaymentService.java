@@ -2,7 +2,9 @@ package com.example.ulearn.telegram_bot.service;
 
 import com.example.ulearn.telegram_bot.TelegramBot;
 import com.example.ulearn.telegram_bot.model.*;
-import com.example.ulearn.telegram_bot.model.untis.CodeUnit;
+import com.example.ulearn.telegram_bot.model.repo.PaymentRepository;
+import com.example.ulearn.telegram_bot.model.repo.UserRepository;
+import com.example.ulearn.telegram_bot.model.CodeUnit;
 import com.vdurmont.emoji.EmojiParser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

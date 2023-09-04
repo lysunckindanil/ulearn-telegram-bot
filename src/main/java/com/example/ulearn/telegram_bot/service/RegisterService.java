@@ -3,7 +3,7 @@ package com.example.ulearn.telegram_bot.service;
 
 import com.example.ulearn.telegram_bot.model.Block;
 import com.example.ulearn.telegram_bot.model.User;
-import com.example.ulearn.telegram_bot.model.untis.CodeUnit;
+import com.example.ulearn.telegram_bot.model.CodeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 

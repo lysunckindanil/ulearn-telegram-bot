@@ -1,6 +1,5 @@
 package com.example.ulearn.telegram_bot.model;
 
-import com.example.ulearn.telegram_bot.model.untis.CodeUnit;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

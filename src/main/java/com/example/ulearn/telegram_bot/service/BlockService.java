@@ -1,7 +1,7 @@
 package com.example.ulearn.telegram_bot.service;
 
 import com.example.ulearn.telegram_bot.model.Block;
-import com.example.ulearn.telegram_bot.model.BlockRepository;
+import com.example.ulearn.telegram_bot.model.repo.BlockRepository;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
