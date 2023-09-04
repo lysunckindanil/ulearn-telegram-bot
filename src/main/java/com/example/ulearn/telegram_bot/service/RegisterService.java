@@ -23,7 +23,6 @@ import static com.example.ulearn.generator.engine.Generator.generate;
 @Slf4j
 @Service
 public class RegisterService {
-
     private static final String UsersCodeFiles = "src/main/resources/CodeData" + File.separator + "UsersCodeFiles";
 
     public static void registerBlocks(User user, List<Block> blocksToAdd) {

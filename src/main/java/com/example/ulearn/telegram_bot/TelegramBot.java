@@ -1,14 +1,15 @@
 package com.example.ulearn.telegram_bot;
 
 import com.example.ulearn.telegram_bot.config.BotConfig;
-import com.example.ulearn.telegram_bot.model.*;
+import com.example.ulearn.telegram_bot.model.Block;
+import com.example.ulearn.telegram_bot.model.User;
+import com.example.ulearn.telegram_bot.model.UserRepository;
 import com.example.ulearn.telegram_bot.model.untis.CodeUnit;
 import com.example.ulearn.telegram_bot.service.BlockService;
 import com.example.ulearn.telegram_bot.service.PaymentService;
 import com.example.ulearn.telegram_bot.service.source.BotResources;
 import com.vdurmont.emoji.EmojiParser;
 import lombok.extern.slf4j.Slf4j;
-import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
@@ -23,14 +24,10 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.*;
 
-import static com.example.ulearn.telegram_bot.service.PaymentService.checkPaymentStatusLoop;
-import static com.example.ulearn.telegram_bot.service.PaymentService.getUrlJson;
 import static com.example.ulearn.telegram_bot.service.RegisterService.registerBlocks;
 import static com.example.ulearn.telegram_bot.service.tools.SendMessageTools.sendMessage;
-import static com.example.ulearn.telegram_bot.service.tools.SerializationTools.serializeToString;
 
 @SuppressWarnings("OptionalGetWithoutIsPresent")
 @Slf4j
@@ -38,18 +35,17 @@ import static com.example.ulearn.telegram_bot.service.tools.SerializationTools.s
 public class TelegramBot extends TelegramLongPollingBot {
     private final BotConfig config;
     private final UserRepository userRepository;
-    private final PaymentRepository paymentRepository;
     private final BotResources source;
     private final BlockService blockService;
+
     private final PaymentService paymentService;
 
     @Autowired
-    public TelegramBot(BotConfig config, UserRepository userRepository, BotResources source, PaymentRepository paymentRepository, PaymentService paymentService, BlockService blockService, PaymentService paymentService1) {
+    public TelegramBot(BotConfig config, UserRepository userRepository, BotResources source, PaymentService paymentService, BlockService blockService) {
         super(config.getToken());
         this.config = config;
         this.userRepository = userRepository;
         this.source = source;
-        this.paymentRepository = paymentRepository;
         this.blockService = blockService;
         this.paymentService = paymentService;
         paymentService.restorePayments(this);
@@ -84,7 +80,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     if (userRepository.findById(chatId).get().getBlocks().size() == blockService.getBlocks().size()) {
                         String text = EmojiParser.parseToUnicode("У вас уже куплены все блоки, вы большой молодец :blush:");
                         sendMessage(this, chatId, text);
-                    } else sendMessage(this, chatId, source.getChoosingTwoOptionsText(), source.getBuyMenu());
+                    } else sendMessage(this, chatId, paymentService.getChoosingTwoOptionsText(), source.getBuyMenu());
                 }
                 case "/help" -> sendMessage(this, chatId, source.getHelpText());
                 default -> {
@@ -103,7 +99,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         EditMessageText editMessageText = new EditMessageText();
         // here two conditions below (BUY_ALL and BUY_ONE) for send user for payment action
         if (callBackData.equals(source.BUY_ALL_STRING)) {
-            buy(chatId, null, message);
+            paymentService.proceedPayment(this, chatId, null, message);
         } else if (callBackData.equals(source.BUY_ONE_STRING)) {
             // here bot sends user block choosing form in order to know which block the client wants to buy
             editMessageText.setText("Теперь, пожалуйста, выберите блок, который хотите купить");
@@ -116,7 +112,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 sendMessage(this, editMessageText, message);
             } else {
                 Block block = blockService.getBlocks().stream().filter(x -> x.inEnglish().equals(callBackData)).findFirst().get();
-                buy(chatId, block, message);
+                paymentService.proceedPayment(this, chatId, block, message);
             }
         } else if (callBackData.startsWith("get")) {
             // callBack on /show -> get any block command
@@ -198,7 +194,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     joiner.add(codeUnit.getName());
                 }
             }
-            InlineKeyboardMarkup inlineKeyboardMarkup = source.getOneButtonKeyboardMarkup("Получить", null, "get" + block.inEnglish());
+            InlineKeyboardMarkup inlineKeyboardMarkup = source.getOneButtonKeyboardMarkup("Получить", "get" + block.inEnglish());
             sendMessage(this, user.getChatId(), joiner.toString(), inlineKeyboardMarkup);
             joiner = new StringJoiner("\n"); //reloads joiner in order to send next block
         }
@@ -232,82 +228,6 @@ public class TelegramBot extends TelegramLongPollingBot {
             sendMessage(this, chatId, files, caption); // sends media group to user
         }
     }
-
-    private void buy(long chatId, Block block, Message message) {
-        Runnable task = () -> {
-            // order description
-            int price = block == null ? source.PRICE_ALL_BLOCKS : source.PRICE_ONE_BLOCK;
-            int numberOfOrder = new Random().nextInt(10000, 100000);
-            String payment_description = "Order " + numberOfOrder + "\n" + "User: " + chatId + "\n" + "Block: " + (block == null ? "all blocks" : block.inEnglish()) + "\n" + "Price: " + price;
-            // create request to get url and payment code
-            // creating json request
-            JSONObject urlJson = getUrlJson(payment_description, price, source.SERVER_URL);
-
-            String id = (String) urlJson.get("payment_id");
-            String url = (String) urlJson.get("payment_url");
-            String description = EmojiParser.parseToUnicode("Заказ " + numberOfOrder + " создан :white_check_mark:") + "\n" + (block != null ? source.getOneBlockDescriptionPaymentText(block) : source.getAllBlocksDescriptionPaymentText());
-
-            // sends information about order to user, with link to pay
-            EditMessageText editMessageText = new EditMessageText();
-            editMessageText.setText(description);
-            editMessageText.setReplyMarkup(source.getOneButtonKeyboardMarkup("Оплатить", url, null));
-            sendMessage(this, editMessageText, message);
-            log.info("Created order " + numberOfOrder + " chatId " + chatId + " payment_id " + id);
-
-            // writes payment info to database
-            // process of checking whether payment paid or not
-            Payment payment = new Payment();
-            payment.setId(id);
-            payment.setChatId(chatId);
-            payment.setStatus("process");
-            payment.setBlocks(block == null ? null : block.inEnglish());
-            payment.setServer_url(source.SERVER_URL);
-            payment.setNumber_of_order(numberOfOrder);
-            payment.setDate(new Date(System.currentTimeMillis()).toString());
-            // serializes message in order to have an ability to delete link if bot is broken, and we need somehow to restore payment (restorePayment method)
-            try {
-                payment.setMessage(serializeToString(message));
-            } catch (IOException e) {
-                log.error("Error to serialize message");
-            }
-            paymentRepository.save(payment);
-
-            // gets response whether user has paid or not
-            int response = checkPaymentStatusLoop(id, source.SERVER_URL, 1800);
-            // if response got, analyses it
-            if (response == 1) {
-                User user = userRepository.findById(chatId).get();
-                if (block == null) {
-                    registerBlocks(user, blockService.getBlocks());
-                    userRepository.save(user);
-                    editMessageText.setText(EmojiParser.parseToUnicode("Заказ " + numberOfOrder + " оплачен :white_check_mark:\n" + "Поздравляю! Вы купили практики всех блоков :sunglasses: \nЧтобы их получить, перейдите в /show"));
-
-                } else {
-                    registerBlocks(user, block);
-                    userRepository.save(user);
-                    editMessageText.setText(EmojiParser.parseToUnicode("Заказ " + numberOfOrder + " оплачен :white_check_mark:\n" + "Поздравляю! Вы купили практики " + block.inRussian() + "а :sunglasses: \nЧтобы их получить, перейдите в /show"));
-                }
-                log.info("ChatId " + chatId + " bought block/blocks payment_id " + id);
-            } else if (response == -1) {
-                editMessageText.setText(EmojiParser.parseToUnicode("Заказ " + numberOfOrder + " отменен :persevere:\nСкорее всего платеж был отменен. Повторите покупку или напишите в поддержку!"));
-                log.info("ChatId " + chatId + " cancelled payment payment_id " + id);
-            } else if (response == 0) {
-                editMessageText.setText(EmojiParser.parseToUnicode("Заказ " + numberOfOrder + " отменен :persevere:\nСкорее всего у вас истек срок оплаты. Повторите покупку или напишите в поддержку!"));
-                log.info("ChatId " + chatId + " is out of time payment_id " + id);
-            }
-
-            // deletes link in replyMarkup in order it wouldn't be available to pay after out of time
-            editMessageText.setReplyMarkup(null);
-            sendMessage(this, editMessageText, message);
-
-            // status completed if all's gone right no matter was it paid, cancelled or out of time
-            payment.setStatus("completed");
-            paymentRepository.save(payment);
-        };
-        Thread thread = new Thread(task);
-        thread.start();
-    } //todo change text
-
 
     @Override
     public String getBotUsername() {

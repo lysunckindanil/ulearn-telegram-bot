@@ -1,8 +1,5 @@
 package com.example.ulearn.telegram_bot.service.source;
 
-import com.example.ulearn.telegram_bot.model.Block;
-import com.example.ulearn.telegram_bot.model.untis.CodeUnit;
-import com.vdurmont.emoji.EmojiParser;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
@@ -12,21 +9,13 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.StringJoiner;
 
 @SuppressWarnings("SpringPropertySource")
 @Component
 @Slf4j
-@PropertySource("application.properties")
 @PropertySource("telegram.properties")
 public class BotResources {
 
-    @Value("${server.url}")
-    public String SERVER_URL;
-    @Value("${price.all_blocks}")
-    public int PRICE_ALL_BLOCKS;
-    @Value("${price.one_block}")
-    public int PRICE_ONE_BLOCK;
     public String BUY_ALL_STRING = "BUY_ALL";
     public String BUY_ONE_STRING = "BUY_ONE";
     @Value("${admin.chatId}")
@@ -47,14 +36,12 @@ public class BotResources {
         return inlineKeyboardMarkup;
     }
 
-    public InlineKeyboardMarkup getOneButtonKeyboardMarkup(String text, String url, String callBackData) {
+    public InlineKeyboardMarkup getOneButtonKeyboardMarkup(String text, String callBackData) {
         InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> keyboardRows = new ArrayList<>();
         List<InlineKeyboardButton> keyboardRow = new ArrayList<>();
         InlineKeyboardButton button = new InlineKeyboardButton(text);
-        button.setCallbackData("Купить");
-        if (url != null) button.setUrl(url);
-        if (callBackData != null) button.setCallbackData(callBackData);
+        button.setCallbackData(callBackData);
         keyboardRow.add(button);
         keyboardRows.add(keyboardRow);
         inlineKeyboardMarkup.setKeyboard(keyboardRows);
@@ -103,24 +90,6 @@ public class BotResources {
         keyboardRows.add(keyboardRow3);
         inlineKeyboardMarkup.setKeyboard(keyboardRows);
         return inlineKeyboardMarkup;
-    }
-
-    public String getOneBlockDescriptionPaymentText(Block block) {
-        StringJoiner joiner = new StringJoiner("\n");
-        joiner.add("Вы купите практики " + block.inRussian().replace(" ", "го ") + "a:");
-        for (CodeUnit codeUnit : block.getCodeUnits()) {
-            joiner.add(codeUnit.getName());
-        }
-        joiner.add("Цена " + PRICE_ONE_BLOCK + " рублей");
-        return joiner.toString();
-    }
-
-    public String getAllBlocksDescriptionPaymentText() {
-        return "Вам будут доступны все блоки!\nЦена " + PRICE_ALL_BLOCKS + " рублей";
-    }
-
-    public String getChoosingTwoOptionsText() {
-        return EmojiParser.parseToUnicode("Вы можете купить все блоки или только один. " + "Цена всех блоков - 1800, одного - 300 рублей :innocent:");
     }
 
     public String getHelpText() {

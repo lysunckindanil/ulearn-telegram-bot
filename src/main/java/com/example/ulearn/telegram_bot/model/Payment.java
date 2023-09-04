@@ -6,6 +6,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.Data;
 
+import java.util.Date;
+
 @Data
 @Entity
 @Table(name = "payments")
@@ -16,7 +18,7 @@ public class Payment {
     private Long chatId;
     private String blocks;
     private String server_url;
-    private String date;
+    private Date date;
     private String status;
     @Column(length = 16384)
     private String message;
