@@ -1,8 +1,7 @@
-package com.example.ulearn.telegram_bot.service.tools;
+package com.example.ulearn.telegram_bot.service;
 
+import com.example.ulearn.telegram_bot.TelegramBot;
 import com.example.ulearn.telegram_bot.model.*;
-import com.example.ulearn.telegram_bot.service.BlockService;
-import com.example.ulearn.telegram_bot.service.TelegramBot;
 import com.vdurmont.emoji.EmojiParser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,7 +14,7 @@ import org.apache.http.util.EntityUtils;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.Message;
 
@@ -24,15 +23,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.example.ulearn.telegram_bot.service.tools.RegisterTools.registerBlocks;
+import static com.example.ulearn.telegram_bot.service.RegisterService.registerBlocks;
 import static com.example.ulearn.telegram_bot.service.tools.SendMessageTools.sendMessage;
 import static com.example.ulearn.telegram_bot.service.tools.SerializationTools.deserializeFromString;
 
 @SuppressWarnings("OptionalGetWithoutIsPresent")
 @Slf4j
-@Component
+@Service
 @RequiredArgsConstructor
-public class PaymentTools {
+public class PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final UserRepository userRepository;
@@ -128,7 +127,7 @@ public class PaymentTools {
                     if (response == 1) {
                         if (payment.getBlocks() == null) {
                             User user = userRepository.findById(chatId).get();
-                            RegisterTools.registerBlocks(user, blockService.getBlocks());
+                            RegisterService.registerBlocks(user, blockService.getBlocks());
                             userRepository.save(user);
                             editMessageText.setText(EmojiParser.parseToUnicode("Заказ " + numberOfOrder + " оплачен :white_check_mark:\n" + "Поздравляю! Вы купили практики всех блоков :sunglasses: \nЧтобы их получить, перейдите в /show"));
                         } else {

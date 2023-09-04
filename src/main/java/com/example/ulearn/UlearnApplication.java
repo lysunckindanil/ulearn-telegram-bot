@@ -8,7 +8,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import java.io.IOException;
 import java.util.Properties;
 
-import static com.example.ulearn.telegram_bot.service.tools.PaymentTools.sendJson;
+import static com.example.ulearn.telegram_bot.service.PaymentService.sendJson;
 
 @SpringBootApplication
 @Slf4j

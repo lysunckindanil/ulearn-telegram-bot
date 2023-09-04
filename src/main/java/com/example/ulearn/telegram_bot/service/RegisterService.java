@@ -1,10 +1,11 @@
-package com.example.ulearn.telegram_bot.service.tools;
+package com.example.ulearn.telegram_bot.service;
 
 
 import com.example.ulearn.telegram_bot.model.Block;
 import com.example.ulearn.telegram_bot.model.User;
 import com.example.ulearn.telegram_bot.model.untis.CodeUnit;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.IOException;
@@ -20,7 +21,8 @@ import static com.example.ulearn.generator.engine.Generator.generate;
 
 
 @Slf4j
-public class RegisterTools {
+@Service
+public class RegisterService {
 
     private static final String UsersCodeFiles = "src/main/resources/CodeData" + File.separator + "UsersCodeFiles";
 
