@@ -128,7 +128,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             // order description
             int price = block == null ? source.PRICE_ALL_BLOCKS : source.PRICE_ONE_BLOCK;
             int numberOfOrder = new Random().nextInt(10000, 100000);
-            String payment_description = "Order " + numberOfOrder + "\n" + "User: " + chatId + "\n" + "Block: " + (block == null ? "all blocks" : block) + "\n" + "Price: " + price;
+            String payment_description = "Order " + numberOfOrder + "\n" + "User: " + chatId + "\n" + "Block: " + (block == null ? "all blocks" : block.inEnglish()) + "\n" + "Price: " + price;
             // create request to get url and payment code
             // creating json request
             JSONObject urlJson = getUrlJson(payment_description, price, source.SERVER_URL);
@@ -150,7 +150,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             payment.setId(id);
             payment.setChatId(chatId);
             payment.setStatus("process");
-            payment.setBlocks(block == null ? null : block.toString());
+            payment.setBlocks(block == null ? null : block.inEnglish());
             payment.setServer_url(source.SERVER_URL);
             payment.setNumber_of_order(numberOfOrder);
             payment.setDate(new Date(System.currentTimeMillis()).toString());

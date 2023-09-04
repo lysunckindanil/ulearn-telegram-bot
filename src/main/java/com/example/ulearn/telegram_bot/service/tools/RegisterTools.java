@@ -43,13 +43,9 @@ public class RegisterTools {
 
     private static void register(User user, Block block) {
         // transfer files from resources to user folder and adds information to database
-        String files;
-        if (block.getCodeUnits().isEmpty())
-            files = ""; // if there are no code units then there are no files and nothing to transfer
-        else
-            files = transferDataToUserFiles(user.getChatId(), block.getCodeUnits()); //transfer files from resources to user folder
+        String files = transferDataToUserFiles(user.getChatId(), block.getCodeUnits()); //transfer files from resources to user folder
         // adds strings to database decided whether user data is empty or not
-        if (user.getBlocks().isEmpty()) {
+        if (user.getFiles().isEmpty()) {
             user.setFiles(files);
             user.addBlock(block);
         } else {
@@ -92,22 +88,24 @@ public class RegisterTools {
 
     public static File getFile(CodeUnit codeUnit) {
         if (codeUnit.isFabricate()) {
-            // path do sources
+            // path to sources dir
             String src = "src" + File.separator + "main" + File.separator + "resources" + File.separator + "CodeData";
             // path where pattern should be by default
             Path pattern = Path.of(src + File.separator + "CodePatternFiles" + File.separator + codeUnit.getOriginal().getName());
             // path to folder where the method gets file or generated if it's empty
-            Path destination = Path.of(src + File.separator + "CodeFormattedFiles" + File.separator + codeUnit.getName());
-            if (isDirEmpty(destination)) {
+            Path generatedFilesFolder = Path.of(src + File.separator + "CodeFormattedFiles" + File.separator + codeUnit.getName());
+            if (isDirEmpty(generatedFilesFolder)) {
                 try {
-                    if (Files.exists(pattern) && Files.exists(destination))
-                        generate(codeUnit.getOriginal().toPath(), pattern, destination);
-                    else log.error("Pattern or destination isn't exist");
+                    if (Files.exists(pattern)) {
+                        // path where generator creates folder with generated files
+                        Path path = Path.of(src + File.separator + "CodeFormattedFiles");
+                        generate(codeUnit.getOriginal().toPath(), pattern, path);
+                    } else log.error("Pattern doesn't exist");
                 } catch (IOException e) {
                     log.error("Unable to generate files");
                 }
             }
-            return Objects.requireNonNull(destination.toFile().listFiles())[0];
+            return Objects.requireNonNull(generatedFilesFolder.toFile().listFiles())[0];
         } else {
             return codeUnit.getOriginal();
         }

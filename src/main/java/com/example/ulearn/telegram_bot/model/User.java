@@ -20,11 +20,10 @@ public class User {
     private String userName;
     @Column(length = 8192)
     private String files;
-    @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<Block> blocks = new ArrayList<>();
 
     public void addBlock(Block block) {
-        block.addUser(this);
         blocks.add(block);
         Collections.sort(blocks);
     }

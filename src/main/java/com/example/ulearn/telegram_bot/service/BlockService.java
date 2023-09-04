@@ -20,7 +20,6 @@ public class BlockService {
     public BlockService(BlockRepository blockRepository) {
         this.blockRepository = blockRepository;
         this.blocks = blockRepository.findAll();
-//        loadToRepo();
     }
 
 

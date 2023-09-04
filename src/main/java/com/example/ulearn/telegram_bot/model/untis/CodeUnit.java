@@ -9,6 +9,7 @@ import org.apache.commons.io.FilenameUtils;
 
 import java.io.File;
 
+@SuppressWarnings("unused")
 @Getter
 @Setter
 @Entity

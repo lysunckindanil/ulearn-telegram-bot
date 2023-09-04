@@ -20,6 +20,7 @@ public class Generator {
 
     private static final int DEFAULT_GENERATION_LIMIT = 1024;
 
+    // destination is directory where will be created folder with generated files (folder is original file name without extension)
     public static void generate(Path original, Path pattern, Path destination) throws IOException {
         String originalString = readFile(original);
         List<String> formattedStrings = getFormattedStrings(pattern, originalString, DEFAULT_GENERATION_LIMIT);
