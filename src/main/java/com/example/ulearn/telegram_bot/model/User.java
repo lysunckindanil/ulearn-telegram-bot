@@ -1,14 +1,18 @@
 package com.example.ulearn.telegram_bot.model;
 
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import lombok.Data;
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+
 @Entity
+@Getter
+@Setter
 @Table(name = "users")
 public class User {
     @Id
@@ -16,14 +20,12 @@ public class User {
     private String userName;
     @Column(length = 8192)
     private String files;
-    @Column(length = 8192)
-    private String blocks;
+    @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    private List<Block> blocks = new ArrayList<>();
 
-    @Override
-    public String toString() {
-        return "User{" +
-                "chatId=" + chatId +
-                ", userName='" + userName + '\'' +
-                '}';
+    public void addBlock(Block block) {
+        block.addUser(this);
+        blocks.add(block);
+        Collections.sort(blocks);
     }
 }

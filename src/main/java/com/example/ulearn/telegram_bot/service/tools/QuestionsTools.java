@@ -1,6 +1,6 @@
 package com.example.ulearn.telegram_bot.service.tools;
 
-import com.example.ulearn.telegram_bot.service.source.Block;
+import com.example.ulearn.telegram_bot.model.Block;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 
 import java.io.File;
@@ -14,7 +14,7 @@ public class QuestionsTools {
 
     public static void sendQuestions(TelegramLongPollingBot bot, long chatId, Block block) {
         // sends ulearn questions to user
-        List<File> files = getFilesByBlock(block.toString()); // get list of files
+        List<File> files = getFilesByBlock(block.inEnglish()); // get list of files
         String caption = "Ваши контрольные вопросы " + block.inRussian() + "а";
         if (files != null) sendMessage(bot, chatId, files, caption); // sends media group to user
     }

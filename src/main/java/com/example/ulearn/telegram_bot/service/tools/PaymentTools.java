@@ -1,13 +1,8 @@
 package com.example.ulearn.telegram_bot.service.tools;
 
-import com.example.ulearn.telegram_bot.model.Payment;
-import com.example.ulearn.telegram_bot.model.PaymentRepository;
-import com.example.ulearn.telegram_bot.model.User;
-import com.example.ulearn.telegram_bot.model.UserRepository;
+import com.example.ulearn.telegram_bot.model.*;
 import com.example.ulearn.telegram_bot.service.BlockService;
 import com.example.ulearn.telegram_bot.service.TelegramBot;
-import com.example.ulearn.telegram_bot.service.source.Block;
-import com.example.ulearn.telegram_bot.service.source.BotResources;
 import com.vdurmont.emoji.EmojiParser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.example.ulearn.telegram_bot.service.tools.RegisterTools.registerUserBlocks;
+import static com.example.ulearn.telegram_bot.service.tools.RegisterTools.registerBlocks;
 import static com.example.ulearn.telegram_bot.service.tools.SendMessageTools.sendMessage;
 import static com.example.ulearn.telegram_bot.service.tools.SerializationTools.deserializeFromString;
 
@@ -39,10 +34,8 @@ import static com.example.ulearn.telegram_bot.service.tools.SerializationTools.d
 @RequiredArgsConstructor
 public class PaymentTools {
 
-
     private final PaymentRepository paymentRepository;
     private final UserRepository userRepository;
-    private final BotResources source;
     private final BlockService blockService;
 
     public static JSONObject getUrlJson(String payment_description, int price, String url) {
@@ -135,18 +128,17 @@ public class PaymentTools {
                     if (response == 1) {
                         if (payment.getBlocks() == null) {
                             User user = userRepository.findById(chatId).get();
-                            RegisterTools.registerUserBlocks(user, blockService.getBlocks());
+                            RegisterTools.registerBlocks(user, blockService.getBlocks());
                             userRepository.save(user);
                             editMessageText.setText(EmojiParser.parseToUnicode("Заказ " + numberOfOrder + " оплачен :white_check_mark:\n" + "Поздравляю! Вы купили практики всех блоков :sunglasses: \nЧтобы их получить, перейдите в /show"));
                         } else {
-                            Block block = blockService.getBlocks().stream().filter(x -> x.toString().equals(payment.getBlocks())).findFirst().get();
+                            Block block = blockService.getBlocks().stream().filter(x -> x.inEnglish().equals(payment.getBlocks())).findFirst().get();
                             User user = userRepository.findById(chatId).get();
-                            registerUserBlocks(user, block);
+                            registerBlocks(user, block);
                             userRepository.save(user);
                             editMessageText.setText(EmojiParser.parseToUnicode("Заказ " + numberOfOrder + " оплачен :white_check_mark:\n" + "Поздравляю! Вы купили практики " + block.inRussian() + "а :sunglasses: \nЧтобы их получить, перейдите в /show"));
                         }
                         log.info("Restore chatId " + chatId + " bought block/blocks payment_id " + id);
-                        bot.sortUserBlocks(chatId);
                     } else if (response == -1) {
                         editMessageText.setText(EmojiParser.parseToUnicode("Заказ " + numberOfOrder + " отменен :persevere:\nСкорее всего платеж был отменен. Повторите покупку или напишите в поддержку!"));
                         log.info("Restore chatId " + chatId + " cancelled payment payment_id " + id);

@@ -1,7 +1,7 @@
 package com.example.ulearn.telegram_bot.service.source;
 
-import com.example.ulearn.generator.units.CodeUnit;
-import com.example.ulearn.generator.units.FormattedCodeUnit;
+import com.example.ulearn.telegram_bot.model.Block;
+import com.example.ulearn.telegram_bot.model.untis.CodeUnit;
 import com.vdurmont.emoji.EmojiParser;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -10,7 +10,6 @@ import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringJoiner;
@@ -19,6 +18,7 @@ import java.util.StringJoiner;
 @Component
 @Slf4j
 @PropertySource("application.properties")
+@PropertySource("telegram.properties")
 public class BotResources {
 
     @Value("${server.url}")
@@ -31,22 +31,6 @@ public class BotResources {
     public String BUY_ONE_STRING = "BUY_ONE";
     @Value("${admin.chatId}")
     public long ADMIN_CHATID;
-
-    private static FormattedCodeUnit getDefFCU(String name) {
-        String file_name = name + ".txt";
-        String src = "src" + File.separator + "main" + File.separator + "resources" + File.separator + "CodeData";
-        File original = new File(src + File.separator + "CodeOriginalFiles" + File.separator + file_name);
-        File pattern = new File(src + File.separator + "CodePatternFiles" + File.separator + file_name);
-        File destination = new File(src + File.separator + "CodeFormattedFiles" + File.separator);
-        return new FormattedCodeUnit(original, pattern, destination);
-    }
-
-    private static CodeUnit getDefCU(String name) {
-        String file_name = name + ".txt";
-        String src = "src" + File.separator + "main" + File.separator + "resources" + File.separator + "CodeData";
-        File file = new File(src + File.separator + "CodeOriginalFiles" + File.separator + file_name);
-        return new CodeUnit(file);
-    }
 
     public InlineKeyboardMarkup getBuyMenu() {
         InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
