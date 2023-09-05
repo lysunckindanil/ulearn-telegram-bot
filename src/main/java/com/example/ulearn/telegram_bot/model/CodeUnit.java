@@ -1,6 +1,5 @@
 package com.example.ulearn.telegram_bot.model;
 
-import com.example.ulearn.telegram_bot.model.Block;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -8,6 +7,8 @@ import lombok.Setter;
 import org.apache.commons.io.FilenameUtils;
 
 import java.io.File;
+
+import static com.example.ulearn.telegram_bot.service.source.BotResources.SOURCE;
 
 @SuppressWarnings("unused")
 @Getter
@@ -37,7 +38,7 @@ public class CodeUnit {
 
     public CodeUnit(String name, boolean isFabricate) {
         this.name = name;
-        this.original = new File("src" + File.separator + "main" + File.separator + "resources" + File.separator + "CodeData" + File.separator + "CodeOriginalFiles" + File.separator + name + ".txt");
+        this.original = new File(SOURCE + File.separator + "CodeOriginalFiles" + File.separator + name + ".txt");
         this.isFabricate = isFabricate;
     }
 

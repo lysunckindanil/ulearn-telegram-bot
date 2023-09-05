@@ -14,7 +14,7 @@ import org.json.simple.parser.ParseException;
 import java.io.IOException;
 
 @Slf4j
-public class JsonTools {
+public class ServerTools {
     public static JSONObject sendJson(JSONObject jsonObject, String url) {
         // sends json to passed url
         String responseJSON;

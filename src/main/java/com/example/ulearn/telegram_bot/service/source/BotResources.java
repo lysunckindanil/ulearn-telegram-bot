@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,13 +16,14 @@ import java.util.List;
 @Slf4j
 @PropertySource("telegram.properties")
 public class BotResources {
+    public static String SOURCE = "src" + File.separator + "main" + File.separator + "resources" + File.separator + "CodeData";
 
-    public String BUY_ALL_STRING = "BUY_ALL";
-    public String BUY_ONE_STRING = "BUY_ONE";
+    public static String BUY_ALL_STRING = "BUY_ALL";
+    public static String BUY_ONE_STRING = "BUY_ONE";
     @Value("${admin.chatId}")
     public long ADMIN_CHATID;
 
-    public InlineKeyboardMarkup getBuyMenu() {
+    public static InlineKeyboardMarkup getBuyMenu() {
         InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> keyboardRows = new ArrayList<>();
         List<InlineKeyboardButton> keyboardRow = new ArrayList<>();
@@ -36,7 +38,7 @@ public class BotResources {
         return inlineKeyboardMarkup;
     }
 
-    public InlineKeyboardMarkup getOneButtonKeyboardMarkup(String text, String callBackData) {
+    public static InlineKeyboardMarkup getOneButtonKeyboardMarkup(String text, String callBackData) {
         InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> keyboardRows = new ArrayList<>();
         List<InlineKeyboardButton> keyboardRow = new ArrayList<>();
@@ -48,7 +50,7 @@ public class BotResources {
         return inlineKeyboardMarkup;
     }
 
-    public InlineKeyboardMarkup getBlockChoosingMenu() {
+    public static InlineKeyboardMarkup getBlockChoosingMenu() {
         InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> keyboardRows = new ArrayList<>();
 
@@ -92,7 +94,7 @@ public class BotResources {
         return inlineKeyboardMarkup;
     }
 
-    public String getHelpText() {
+    public static String getHelpText() {
 
         return "Оплата проводится через систему платежей ЮКасса. После оплаты вам будут доступны выбранные блоки. " + "Чтобы их получить, перейдите /show.";
     }

@@ -22,6 +22,25 @@ public class Generator {
 
     // destination is directory where will be created folder with generated files (folder is original file name without extension)
     public static void generate(Path original, Path pattern, Path destination) throws IOException {
+        if (!Files.exists(original)) throw new IOException() {
+            @Override
+            public String toString() {
+                return "Original file doesn't exist";
+            }
+        };
+        if (!Files.exists(pattern)) throw new IOException() {
+            @Override
+            public String toString() {
+                return "Pattern file doesn't exist";
+            }
+        };
+        if (!Files.exists(destination)) throw new IOException() {
+            @Override
+            public String toString() {
+                return "Destination folder doesn't exist";
+            }
+        };
+
         String originalString = readFile(original);
         List<String> formattedStrings = getFormattedStrings(pattern, originalString, DEFAULT_GENERATION_LIMIT);
         String folder = FilenameUtils.removeExtension(original.getFileName().toString());
@@ -88,9 +107,9 @@ public class Generator {
             File file = new File(path + File.separator + folder + (i + 1) + ".txt");
             try (PrintWriter out = new PrintWriter(file, StandardCharsets.UTF_8)) {
                 if (!file.exists()) {
-                    if (!file.createNewFile()) log.error("Generator: " + file + " is already created");
+                    if (file.createNewFile()) out.print(strings.get(i));
+                    else log.error("Generator: " + file + " is already created");
                 }
-                out.print(strings.get(i));
             } catch (IOException e) {
                 log.error(e.toString());
             }

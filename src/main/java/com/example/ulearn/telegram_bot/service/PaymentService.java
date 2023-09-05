@@ -20,8 +20,8 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import java.io.IOException;
 import java.util.*;
 
-import static com.example.ulearn.telegram_bot.service.RegisterService.registerBlocks;
-import static com.example.ulearn.telegram_bot.service.tools.JsonTools.sendJson;
+import static com.example.ulearn.telegram_bot.service.BlockService.registerBlocks;
+import static com.example.ulearn.telegram_bot.service.tools.ServerTools.sendJson;
 import static com.example.ulearn.telegram_bot.service.tools.SendMessageTools.sendMessage;
 import static com.example.ulearn.telegram_bot.service.tools.SerializationTools.deserializeFromString;
 import static com.example.ulearn.telegram_bot.service.tools.SerializationTools.serializeToString;

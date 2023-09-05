@@ -2,9 +2,9 @@ package com.example.ulearn.telegram_bot;
 
 import com.example.ulearn.telegram_bot.config.BotConfig;
 import com.example.ulearn.telegram_bot.model.Block;
+import com.example.ulearn.telegram_bot.model.CodeUnit;
 import com.example.ulearn.telegram_bot.model.User;
 import com.example.ulearn.telegram_bot.model.repo.UserRepository;
-import com.example.ulearn.telegram_bot.model.CodeUnit;
 import com.example.ulearn.telegram_bot.service.BlockService;
 import com.example.ulearn.telegram_bot.service.PaymentService;
 import com.example.ulearn.telegram_bot.service.source.BotResources;
@@ -26,7 +26,8 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import java.io.File;
 import java.util.*;
 
-import static com.example.ulearn.telegram_bot.service.RegisterService.registerBlocks;
+import static com.example.ulearn.telegram_bot.service.BlockService.registerBlocks;
+import static com.example.ulearn.telegram_bot.service.source.BotResources.*;
 import static com.example.ulearn.telegram_bot.service.tools.SendMessageTools.sendMessage;
 
 @SuppressWarnings("OptionalGetWithoutIsPresent")
@@ -37,7 +38,6 @@ public class TelegramBot extends TelegramLongPollingBot {
     private final UserRepository userRepository;
     private final BotResources source;
     private final BlockService blockService;
-
     private final PaymentService paymentService;
 
     @Autowired
@@ -80,9 +80,9 @@ public class TelegramBot extends TelegramLongPollingBot {
                     if (userRepository.findById(chatId).get().getBlocks().size() == blockService.getBlocks().size()) {
                         String text = EmojiParser.parseToUnicode("У вас уже куплены все блоки, вы большой молодец :blush:");
                         sendMessage(this, chatId, text);
-                    } else sendMessage(this, chatId, paymentService.getChoosingTwoOptionsText(), source.getBuyMenu());
+                    } else sendMessage(this, chatId, paymentService.getChoosingTwoOptionsText(), getBuyMenu());
                 }
-                case "/help" -> sendMessage(this, chatId, source.getHelpText());
+                case "/help" -> sendMessage(this, chatId, getHelpText());
                 default -> {
                     String text = EmojiParser.parseToUnicode("Простите, но я вас не понимаю, чтобы посмотреть мои команды введите /help :relieved:");
                     sendMessage(this, chatId, text);
@@ -98,12 +98,12 @@ public class TelegramBot extends TelegramLongPollingBot {
         long chatId = message.getChatId();
         EditMessageText editMessageText = new EditMessageText();
         // here two conditions below (BUY_ALL and BUY_ONE) for send user for payment action
-        if (callBackData.equals(source.BUY_ALL_STRING)) {
+        if (callBackData.equals(BUY_ALL_STRING)) {
             paymentService.proceedPayment(this, chatId, null, message);
-        } else if (callBackData.equals(source.BUY_ONE_STRING)) {
+        } else if (callBackData.equals(BUY_ONE_STRING)) {
             // here bot sends user block choosing form in order to know which block the client wants to buy
             editMessageText.setText("Теперь, пожалуйста, выберите блок, который хотите купить");
-            editMessageText.setReplyMarkup(source.getBlockChoosingMenu());
+            editMessageText.setReplyMarkup(getBlockChoosingMenu());
             sendMessage(this, editMessageText, message);
         } else if (callBackData.startsWith("block")) {
             // here callBackData from block choosing form
@@ -194,7 +194,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     joiner.add(codeUnit.getName());
                 }
             }
-            InlineKeyboardMarkup inlineKeyboardMarkup = source.getOneButtonKeyboardMarkup("Получить", "get" + block.inEnglish());
+            InlineKeyboardMarkup inlineKeyboardMarkup = getOneButtonKeyboardMarkup("Получить", "get" + block.inEnglish());
             sendMessage(this, user.getChatId(), joiner.toString(), inlineKeyboardMarkup);
             joiner = new StringJoiner("\n"); //reloads joiner in order to send next block
         }
