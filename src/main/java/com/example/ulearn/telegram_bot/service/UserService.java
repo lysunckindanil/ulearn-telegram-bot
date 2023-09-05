@@ -13,9 +13,12 @@ import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.*;
+
+import static com.example.ulearn.telegram_bot.service.source.Resources.*;
 
 
 @SuppressWarnings("SpringPropertySource")
@@ -25,29 +28,27 @@ import java.util.Optional;
 public class UserService {
     private final BlockRepository blockRepository;
     private final UserRepository userRepository;
-    private final FilesService filesService;
+    private final TransferService transferService;
     @Value("${admin.chatId}")
     public long ADMIN_CHATID;
+
+    @Autowired
+    public UserService(BlockRepository blockRepository, UserRepository userRepository, TransferService transferService) {
+        this.blockRepository = blockRepository;
+        this.userRepository = userRepository;
+        this.transferService = transferService;
+    }
 
     public List<Block> getBlocks() {
         return blockRepository.findAll();
     }
 
-    @Autowired
-    public UserService(BlockRepository blockRepository, UserRepository userRepository, FilesService filesService) {
-        this.blockRepository = blockRepository;
-        this.userRepository = userRepository;
-        this.filesService = filesService;
-    }
-
-    /*
-     transfers data to user folder, adds files in database to user and saves it
-     */
     public List<File> getUserFilesByBlock(long chatId, Block block) {
         List<File> files = new ArrayList<>();
+        File directory = new File(USERS_CODE_FILES + File.separator + chatId);
         if (!block.getCodeUnits().isEmpty()) {
             for (CodeUnit codeUnit : block.getCodeUnits()) {
-                Optional<File> file = filesService.getUserFileByShortName(chatId, codeUnit.getName());
+                Optional<File> file = Arrays.stream(Objects.requireNonNull(directory.listFiles())).toList().stream().filter(x -> x.getName().contains(codeUnit.getName())).findFirst();
                 file.ifPresent(files::add);
             }
         }
@@ -56,12 +57,13 @@ public class UserService {
 
     public List<File> getQuestionFilesByBlock(Block block) {
         // gets questions from repository
-        return filesService.getQuestionFilesByFolder(block.inEnglish());
+        List<File> files = new ArrayList<>(); // get list of files
+        File dir = new File(DEFAULT_QUESTIONS_PATH + File.separator + block.inEnglish());
+        if (dir.isDirectory()) {
+            files = List.of(Objects.requireNonNull(dir.listFiles()));
+        }
+        return files;
     }
-
-    /*
-    Registration blocks
-     */
 
     public void registerBlocks(User user, List<Block> blocksToAdd) {
         // add all blocks user doesn't have to database and resources
@@ -82,10 +84,23 @@ public class UserService {
     }
 
     private void register(User user, Block block) {
+        Path transferTo = Path.of(USERS_CODE_FILES + File.separator + user.getChatId());
+        if (!Files.exists(transferTo)) {
+            try {
+                Files.createDirectories(transferTo);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
         for (CodeUnit codeUnit : block.getCodeUnits()) {
-            if (codeUnit.isFabricate())
-                filesService.transferFabricateCodeUnit(user.getChatId(), codeUnit.getOriginal());
-            else filesService.transferCodeUnit(user.getChatId(), codeUnit.getOriginal());
+            if (codeUnit.isFabricate()) {
+                Path original = codeUnit.getOriginal().toPath();
+                Path pattern = Path.of(PATTERN_FILES + File.separator + codeUnit.getOriginal().getName());
+                Path destination = Path.of(FORMATTED_FILES + File.separator + codeUnit.getName());
+                transferService.transferFabricFile(original, pattern, destination, transferTo);
+            } else {
+                transferService.transferFile(codeUnit.getOriginal().toPath(), transferTo);
+            }
 
         }
         user.addBlock(block);

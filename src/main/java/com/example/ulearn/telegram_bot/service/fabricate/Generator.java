@@ -1,4 +1,4 @@
-package com.example.ulearn.generator.engine;
+package com.example.ulearn.telegram_bot.service.fabricate;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
@@ -10,7 +10,6 @@ import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 
 @SuppressWarnings("FieldCanBeLocal")
@@ -43,17 +42,11 @@ public class Generator {
                 return "Pattern file doesn't exist";
             }
         };
-        if (!Files.exists(destination)) throw new IOException() {
-            @Override
-            public String toString() {
-                return "Destination folder doesn't exist";
-            }
-        };
 
         String originalString = readFile(original);
         List<String> formattedStrings = getFormattedStrings(pattern, originalString, limit);
-        String folder = FilenameUtils.removeExtension(original.getFileName().toString());
-        saveFormattedStrings(formattedStrings, destination, folder);
+        String name = FilenameUtils.removeExtension(original.getFileName().toString());
+        saveFormattedStrings(formattedStrings, destination, name);
     }
 
     @SuppressWarnings("unused")
@@ -106,15 +99,14 @@ public class Generator {
         return strings.stream().toList();
     }
 
-    private static void saveFormattedStrings(List<String> strings, Path destination, String folder) throws IOException {
+    private static void saveFormattedStrings(List<String> strings, Path destination, String name) throws IOException {
         //create folder for strings if there is no any
-        Path path = Paths.get(destination + File.separator + folder);
-        if (Files.notExists(path)) {
-            Files.createDirectories(path);
+        if (Files.notExists(destination)) {
+            Files.createDirectories(destination);
         }
         //print each string to file and save em to folders
         for (int i = 0; i < strings.size(); i++) {
-            File file = new File(path + File.separator + folder + (i + 1) + ".txt");
+            File file = new File(destination + File.separator + name + (i + 1) + ".txt");
             try (PrintWriter out = new PrintWriter(file, StandardCharsets.UTF_8)) {
                 out.print(strings.get(i));
             } catch (IOException e) {

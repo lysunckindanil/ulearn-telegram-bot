@@ -8,8 +8,6 @@ import org.apache.commons.io.FilenameUtils;
 
 import java.io.File;
 
-import static com.example.ulearn.telegram_bot.service.FilesService.SOURCE;
-
 
 @SuppressWarnings("unused")
 @Getter
@@ -34,18 +32,6 @@ public class CodeUnit {
     public CodeUnit(File original) {
         this.name = FilenameUtils.removeExtension(original.getName());
         this.original = original;
-        this.isFabricate = false;
-    }
-
-    public CodeUnit(String name, boolean isFabricate) {
-        this.name = name;
-        this.original = new File(SOURCE + File.separator + "CodeOriginalFiles" + File.separator + name + ".txt");
-        this.isFabricate = isFabricate;
-    }
-
-    public CodeUnit(String name) {
-        this.name = name;
-        this.original = new File("src" + File.separator + "main" + File.separator + "resources" + File.separator + "CodeData" + File.separator + "CodeOriginalFiles" + File.separator + name + ".txt");
         this.isFabricate = false;
     }
 }

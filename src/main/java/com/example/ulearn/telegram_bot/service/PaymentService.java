@@ -1,10 +1,12 @@
 package com.example.ulearn.telegram_bot.service;
 
 import com.example.ulearn.telegram_bot.TelegramBot;
-import com.example.ulearn.telegram_bot.model.*;
+import com.example.ulearn.telegram_bot.model.Block;
+import com.example.ulearn.telegram_bot.model.CodeUnit;
+import com.example.ulearn.telegram_bot.model.Payment;
+import com.example.ulearn.telegram_bot.model.User;
 import com.example.ulearn.telegram_bot.model.repo.PaymentRepository;
 import com.example.ulearn.telegram_bot.model.repo.UserRepository;
-import com.example.ulearn.telegram_bot.model.CodeUnit;
 import com.vdurmont.emoji.EmojiParser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,10 +22,10 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import java.io.IOException;
 import java.util.*;
 
-import static com.example.ulearn.telegram_bot.service.tools.ServerTools.sendJson;
 import static com.example.ulearn.telegram_bot.service.tools.SendMessageTools.sendMessage;
 import static com.example.ulearn.telegram_bot.service.tools.SerializationTools.deserializeFromString;
 import static com.example.ulearn.telegram_bot.service.tools.SerializationTools.serializeToString;
+import static com.example.ulearn.telegram_bot.service.tools.ServerTools.sendJson;
 
 @SuppressWarnings({"OptionalGetWithoutIsPresent", "DuplicatedCode", "SpringPropertySource"})
 @Slf4j
@@ -112,7 +114,7 @@ public class PaymentService {
                     // then anything's similar to Telegram.buy() method, but changed logs a little bit
                     EditMessageText editMessageText = new EditMessageText();
                     Block block;
-                    if (payment.getBlocks().isEmpty())
+                    if (!payment.getBlocks().isEmpty())
                         block = userService.getBlocks().stream().filter(x -> x.inEnglish().equals(payment.getBlocks())).findFirst().get();
                     else block = null;
                     String textToUserResponse = handleResponse(payment, block);
@@ -139,7 +141,7 @@ public class PaymentService {
         if (response == 1) {
             // if successful it registers blocks to user
             User user = userRepository.findById(payment.getChatId()).get();
-            if (payment.getBlocks().isEmpty()) {
+            if (block == null) {
                 userService.registerBlocks(user, userService.getBlocks());
                 log.info("ChatId " + chatId + " bought block payment_id " + id);
                 return EmojiParser.parseToUnicode("Заказ " + numberOfOrder + " оплачен :white_check_mark:\n" + "Поздравляю! Вы купили практики всех блоков :sunglasses: \nЧтобы их получить, перейдите в /show");

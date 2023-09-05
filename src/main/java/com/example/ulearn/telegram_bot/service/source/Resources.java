@@ -15,6 +15,11 @@ public class Resources {
     public static String BUY_ALL = "BUY_ALL";
     public static String BUY_ONE = "BUY_ONE";
 
+    public static String SOURCE = "src" + File.separator + "main" + File.separator + "resources" + File.separator + "CodeData";
+    public static final String DEFAULT_QUESTIONS_PATH = SOURCE + File.separator + "UlearnTestQuestions";
+    public static final String USERS_CODE_FILES = SOURCE + File.separator + "UsersCodeFiles";
+    public static final String FORMATTED_FILES = SOURCE + File.separator + "CodeFormattedFiles";
+    public static final String PATTERN_FILES = SOURCE + File.separator + "CodePatternFiles";
 
 
     public static InlineKeyboardMarkup getBuyMenu() {
