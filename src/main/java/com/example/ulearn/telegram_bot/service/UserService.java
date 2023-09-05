@@ -82,9 +82,12 @@ public class UserService {
     }
 
     private void register(User user, Block block) {
-        // transfer files from resources to user folder and adds information to database
-        filesService.transferDataToUserFiles(user.getChatId(), block.getCodeUnits()); //transfer files from resources to user folder
-        // adds strings to database decided whether user data is empty or not
+        for (CodeUnit codeUnit : block.getCodeUnits()) {
+            if (codeUnit.isFabricate())
+                filesService.transferFabricateCodeUnit(user.getChatId(), codeUnit.getOriginal());
+            else filesService.transferCodeUnit(user.getChatId(), codeUnit.getOriginal());
+
+        }
         user.addBlock(block);
     }
 
