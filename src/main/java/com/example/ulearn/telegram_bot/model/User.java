@@ -18,8 +18,6 @@ public class User {
     @Id
     private Long chatId;
     private String userName;
-    @Column(length = 8192)
-    private String files;
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<Block> blocks = new ArrayList<>();
 

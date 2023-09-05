@@ -32,7 +32,6 @@ build/
 ### VS Code ###
 .vscode/
 application.properties
-telegram.properties
 CodeData
 .env
-
+telegram.properties

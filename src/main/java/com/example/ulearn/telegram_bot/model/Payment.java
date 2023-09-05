@@ -20,6 +20,6 @@ public class Payment {
     private String server_url;
     private Date date;
     private String status;
-    @Column(length = 8192)
+    @Column(length = 16384)
     private String message;
 }

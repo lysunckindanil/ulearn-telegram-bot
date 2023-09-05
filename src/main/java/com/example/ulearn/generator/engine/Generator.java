@@ -2,7 +2,6 @@ package com.example.ulearn.generator.engine;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
-import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.io.FileReader;
@@ -14,14 +13,24 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
+@SuppressWarnings("FieldCanBeLocal")
 @Slf4j
-@Component
 public class Generator {
+    private final int DEFAULT_GENERATION_LIMIT = 1024;
 
-    private static final int DEFAULT_GENERATION_LIMIT = 1024;
+    private final int limit;
+
+    @SuppressWarnings("unused")
+    public Generator(int limit) {
+        this.limit = limit;
+    }
+
+    public Generator() {
+        this.limit = DEFAULT_GENERATION_LIMIT;
+    }
 
     // destination is directory where will be created folder with generated files (folder is original file name without extension)
-    public static void generate(Path original, Path pattern, Path destination) throws IOException {
+    public void generate(Path original, Path pattern, Path destination) throws IOException {
         if (!Files.exists(original)) throw new IOException() {
             @Override
             public String toString() {
@@ -42,12 +51,13 @@ public class Generator {
         };
 
         String originalString = readFile(original);
-        List<String> formattedStrings = getFormattedStrings(pattern, originalString, DEFAULT_GENERATION_LIMIT);
+        List<String> formattedStrings = getFormattedStrings(pattern, originalString, limit);
         String folder = FilenameUtils.removeExtension(original.getFileName().toString());
         saveFormattedStrings(formattedStrings, destination, folder);
     }
 
-    public static void generate(Path original, Path pattern, Path destination, int limit) throws IOException {
+    @SuppressWarnings("unused")
+    public void generate(Path original, Path pattern, Path destination, int limit) throws IOException {
         String originalString = readFile(original);
         List<String> formattedStrings = getFormattedStrings(pattern, originalString, limit);
         String folder = FilenameUtils.removeExtension(original.getFileName().toString());
@@ -67,7 +77,7 @@ public class Generator {
         return code.toString();
     }
 
-    private static List<String> getFormattedStrings(Path pattern, String original, int limit) {
+    private List<String> getFormattedStrings(Path pattern, String original, int limit) {
         // load replacements
         List<List<String>> replacements = new ArrayList<>();
         List<String> patternLines;
@@ -106,10 +116,7 @@ public class Generator {
         for (int i = 0; i < strings.size(); i++) {
             File file = new File(path + File.separator + folder + (i + 1) + ".txt");
             try (PrintWriter out = new PrintWriter(file, StandardCharsets.UTF_8)) {
-                if (!file.exists()) {
-                    if (file.createNewFile()) out.print(strings.get(i));
-                    else log.error("Generator: " + file + " is already created");
-                }
+                out.print(strings.get(i));
             } catch (IOException e) {
                 log.error(e.toString());
             }

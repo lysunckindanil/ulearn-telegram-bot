@@ -20,7 +20,6 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import java.io.IOException;
 import java.util.*;
 
-import static com.example.ulearn.telegram_bot.service.BlockService.registerBlocks;
 import static com.example.ulearn.telegram_bot.service.tools.ServerTools.sendJson;
 import static com.example.ulearn.telegram_bot.service.tools.SendMessageTools.sendMessage;
 import static com.example.ulearn.telegram_bot.service.tools.SerializationTools.deserializeFromString;
@@ -36,7 +35,7 @@ public class PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final UserRepository userRepository;
-    private final BlockService blockService;
+    private final UserService userService;
     @Value("${server.url}")
     private String SERVER_URL;
     @Value("${price.all_blocks}")
@@ -114,7 +113,7 @@ public class PaymentService {
                     EditMessageText editMessageText = new EditMessageText();
                     Block block;
                     if (payment.getBlocks().isEmpty())
-                        block = blockService.getBlocks().stream().filter(x -> x.inEnglish().equals(payment.getBlocks())).findFirst().get();
+                        block = userService.getBlocks().stream().filter(x -> x.inEnglish().equals(payment.getBlocks())).findFirst().get();
                     else block = null;
                     String textToUserResponse = handleResponse(payment, block);
 
@@ -141,14 +140,12 @@ public class PaymentService {
             // if successful it registers blocks to user
             User user = userRepository.findById(payment.getChatId()).get();
             if (payment.getBlocks().isEmpty()) {
-                registerBlocks(user, blockService.getBlocks());
-                userRepository.save(user);
+                userService.registerBlocks(user, userService.getBlocks());
                 log.info("ChatId " + chatId + " bought block payment_id " + id);
                 return EmojiParser.parseToUnicode("Заказ " + numberOfOrder + " оплачен :white_check_mark:\n" + "Поздравляю! Вы купили практики всех блоков :sunglasses: \nЧтобы их получить, перейдите в /show");
 
             } else {
-                registerBlocks(user, block);
-                userRepository.save(user);
+                userService.registerBlocks(user, block);
                 log.info("ChatId " + chatId + " bought blocks payment_id " + id);
                 return EmojiParser.parseToUnicode("Заказ " + numberOfOrder + " оплачен :white_check_mark:\n" + "Поздравляю! Вы купили практики " + block.inRussian() + "а :sunglasses: \nЧтобы их получить, перейдите в /show");
             }
