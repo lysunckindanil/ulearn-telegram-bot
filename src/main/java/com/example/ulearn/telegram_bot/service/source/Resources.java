@@ -12,9 +12,9 @@ import java.util.List;
 @Component
 @Slf4j
 public class Resources {
-    public static String SOURCE = "src" + File.separator + "main" + File.separator + "resources" + File.separator + "CodeData";
     public static String BUY_ALL = "BUY_ALL";
     public static String BUY_ONE = "BUY_ONE";
+
 
 
     public static InlineKeyboardMarkup getBuyMenu() {

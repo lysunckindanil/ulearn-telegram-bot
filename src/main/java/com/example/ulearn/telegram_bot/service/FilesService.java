@@ -13,16 +13,20 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
-import static com.example.ulearn.telegram_bot.service.source.Resources.SOURCE;
-
 @Service
 @Slf4j
 public class FilesService {
+    public static String SOURCE = "src" + File.separator + "main" + File.separator + "resources" + File.separator + "CodeData";
+    private static final String QUESTIONS_PATH = SOURCE + File.separator + "UlearnTestQuestions";
     private static final String USERS_CODE_FILES = SOURCE + File.separator + "UsersCodeFiles";
     private static final String FORMATTED_FILES = SOURCE + File.separator + "CodeFormattedFiles";
 
     // moves or copies files to user folder
-    public void transferDataToUserFiles(Long chatId, List<CodeUnit> codeUnits) {
+
+    /*
+     transfer files from main directory to user directories
+     */
+    public void transferDataToUserFiles(long chatId, List<CodeUnit> codeUnits) {
 
         Path path = Paths.get(USERS_CODE_FILES + File.separator + chatId); // user files directory path
         // creates user directory if there isn't any
@@ -54,6 +58,27 @@ public class FilesService {
         }
     }
 
+    public void transferFabricateCodeUnit(long chatId) {
+        Path path = createUserDirectory(chatId);
+    }
+
+    public void transferCodeUnit(long chatId) {
+        Path path = createUserDirectory(chatId);
+    }
+
+    private Path createUserDirectory(long chatId) {
+        Path path = Paths.get(USERS_CODE_FILES + File.separator + chatId); // user files directory path
+        // creates user directory if there isn't any
+        if (Files.notExists(path)) {
+            try {
+                Files.createDirectory(path);
+            } catch (IOException e) {
+                log.error("Unable to create directory " + path);
+            }
+        }
+        return path;
+    }
+
     private static Optional<File> getFile(CodeUnit codeUnit) {
         if (!codeUnit.getOriginal().exists()) return Optional.empty();
         if (codeUnit.isFabricate()) {
@@ -79,6 +104,17 @@ public class FilesService {
         return Optional.of(codeUnit.getOriginal());
     }
 
+    private static boolean isDirEmpty(final Path directory) {
+        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(directory)) {
+            return !dirStream.iterator().hasNext();
+        } catch (IOException ignored) {
+        }
+        return true;
+    }
+
+    /*
+     get files from user's repositories
+     */
     public Optional<File> getUserFileByShortName(long chatId, String name) {
         File directory = new File(USERS_CODE_FILES + File.separator + chatId);
         if (directory.exists())
@@ -87,11 +123,15 @@ public class FilesService {
         else return Optional.empty();
     }
 
-    private static boolean isDirEmpty(final Path directory) {
-        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(directory)) {
-            return !dirStream.iterator().hasNext();
-        } catch (IOException ignored) {
+    public List<File> getQuestionFilesByFolder(String folderName) {
+        // sends ulearn questions to user
+        List<File> files = new ArrayList<>(); // get list of files
+        File dir = new File(QUESTIONS_PATH + File.separator + folderName);
+        if (dir.isDirectory()) {
+            files = List.of(Objects.requireNonNull(dir.listFiles()));
         }
-        return true;
+        return files;
     }
+
+
 }

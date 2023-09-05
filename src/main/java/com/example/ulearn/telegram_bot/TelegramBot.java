@@ -23,7 +23,9 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.StringJoiner;
 
 import static com.example.ulearn.telegram_bot.service.source.Resources.*;
 import static com.example.ulearn.telegram_bot.service.tools.SendMessageTools.sendMessage;
@@ -171,13 +173,12 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private void showUserFiles(User user) {
         // differs from getUserFiles that sends to user all blocks and practices he bought (no files will be sent)
-        List<Block> blocks = user.getBlocks();
         StringJoiner joiner = new StringJoiner("\n");
         sendMessage(this, user.getChatId(), "Ваши практики: ");
 
         //joiner to send messages
         //it sends each name of block and practices separately
-        for (Block block : blocks) {
+        for (Block block : user.getBlocks()) {
             joiner.add("*" + block.inRussian() + "*"); //it makes it look like *блок i*
             // if there are no code units then sends other message
             if (block.getCodeUnits().isEmpty()) joiner.add("Только контрольные вопросы");
@@ -195,36 +196,25 @@ public class TelegramBot extends TelegramLongPollingBot {
     private void sendUserFilesByBlock(long chatId, Block block) {
         // sends all practices by block (it got like "get + block*" where * is a number of block) to user
         // if its empty sends only questions
-        List<File> files = new ArrayList<>();
-        if (!block.getCodeUnits().isEmpty()) {
-            for (CodeUnit codeUnit : block.getCodeUnits()) {
-                Optional<File> file = userService.getUserFileByCodeUnit(chatId, codeUnit);
-                file.ifPresent(files::add);
-            }
-        }
-        log.error(files.toString());
+        List<File> files = userService.getUserFilesByBlock(chatId, block);
         if (files.isEmpty()) {
             sendMessage(this, chatId, "Я не нашел у вас доступных практик этого блока");
-            sendQuestions(chatId, block);
+            sendQuestionsByBlock(chatId, block);
         } else {
             sendMessage(this, chatId, "Ваши практики " + block.inRussian() + "а:");
             for (File file : files)
                 sendMessage(this, chatId, file);
-            sendQuestions(chatId, block);
+            sendQuestionsByBlock(chatId, block);
         }
     }
 
-    public void sendQuestions(long chatId, Block block) {
+    public void sendQuestionsByBlock(long chatId, Block block) {
         // sends ulearn questions to user
-        final String QUESTIONS_PATH = SOURCE + File.separator + "UlearnTestQuestions";
-        List<File> files; // get list of files
-        File dir = new File(QUESTIONS_PATH + File.separator + block.inEnglish());
-        if (dir.isDirectory()) {
-            files = List.of(Objects.requireNonNull(dir.listFiles()));
-            if (!files.isEmpty())
-                sendMessage(this, chatId, files, "Ваши контрольные вопросы " + block.inRussian() + "а"); // sends media group to user
-        }
+        List<File> files = userService.getQuestionFilesByBlock(block);
+        if (!files.isEmpty())
+            sendMessage(this, chatId, files, "Ваши контрольные вопросы " + block.inRussian() + "а"); // sends media group to user
     }
+
 
     @Override
     public String getBotUsername() {

@@ -13,8 +13,10 @@ import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+
 
 @SuppressWarnings("SpringPropertySource")
 @Slf4j
@@ -38,7 +40,29 @@ public class UserService {
         this.filesService = filesService;
     }
 
-    // transfers data to user folder, adds files in database to user and saves it
+    /*
+     transfers data to user folder, adds files in database to user and saves it
+     */
+    public List<File> getUserFilesByBlock(long chatId, Block block) {
+        List<File> files = new ArrayList<>();
+        if (!block.getCodeUnits().isEmpty()) {
+            for (CodeUnit codeUnit : block.getCodeUnits()) {
+                Optional<File> file = filesService.getUserFileByShortName(chatId, codeUnit.getName());
+                file.ifPresent(files::add);
+            }
+        }
+        return files;
+    }
+
+    public List<File> getQuestionFilesByBlock(Block block) {
+        // gets questions from repository
+        return filesService.getQuestionFilesByFolder(block.inEnglish());
+    }
+
+    /*
+    Registration blocks
+     */
+
     public void registerBlocks(User user, List<Block> blocksToAdd) {
         // add all blocks user doesn't have to database and resources
         List<Block> userBlocks = user.getBlocks();
@@ -64,7 +88,4 @@ public class UserService {
         user.addBlock(block);
     }
 
-    public Optional<File> getUserFileByCodeUnit(long chatId, CodeUnit codeUnit) {
-        return filesService.getUserFileByShortName(chatId, codeUnit.getName());
-    }
 }
