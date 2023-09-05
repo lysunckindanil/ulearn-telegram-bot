@@ -6,32 +6,34 @@ import com.example.ulearn.telegram_bot.model.CodeUnit;
 import com.example.ulearn.telegram_bot.model.User;
 import com.example.ulearn.telegram_bot.model.repo.BlockRepository;
 import com.example.ulearn.telegram_bot.model.repo.UserRepository;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.util.List;
 import java.util.Optional;
 
-import static com.example.ulearn.telegram_bot.service.source.BotResources.SOURCE;
-
-
+@SuppressWarnings("SpringPropertySource")
 @Slf4j
 @Service
-@Getter
+@PropertySource("telegram.properties")
 public class UserService {
     private final BlockRepository blockRepository;
     private final UserRepository userRepository;
     private final FilesService filesService;
-    private final List<Block> blocks;
-    private static final String USERS_CODE_FILES = SOURCE + File.separator + "UsersCodeFiles";
+    @Value("${admin.chatId}")
+    public long ADMIN_CHATID;
+
+    public List<Block> getBlocks() {
+        return blockRepository.findAll();
+    }
 
     @Autowired
     public UserService(BlockRepository blockRepository, UserRepository userRepository, FilesService filesService) {
         this.blockRepository = blockRepository;
-        this.blocks = blockRepository.findAll();
         this.userRepository = userRepository;
         this.filesService = filesService;
     }
@@ -62,7 +64,7 @@ public class UserService {
         user.addBlock(block);
     }
 
-    public Optional<File> getUserFileByCodeUnit(User user, CodeUnit codeUnit) {
-        return filesService.getUserFileByShortName(user.getChatId(), codeUnit.getName());
+    public Optional<File> getUserFileByCodeUnit(long chatId, CodeUnit codeUnit) {
+        return filesService.getUserFileByShortName(chatId, codeUnit.getName());
     }
 }

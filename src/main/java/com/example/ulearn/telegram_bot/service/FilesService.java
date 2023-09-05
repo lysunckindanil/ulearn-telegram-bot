@@ -13,7 +13,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
-import static com.example.ulearn.telegram_bot.service.source.BotResources.SOURCE;
+import static com.example.ulearn.telegram_bot.service.source.Resources.SOURCE;
 
 @Service
 @Slf4j

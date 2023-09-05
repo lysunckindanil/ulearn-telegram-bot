@@ -34,4 +34,4 @@ build/
 application.properties
 CodeData
 .env
-telegram.properties
+src/main/resources/telegram.properties

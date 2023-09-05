@@ -1,8 +1,6 @@
 package com.example.ulearn.telegram_bot.service.source;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
@@ -11,17 +9,13 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-@SuppressWarnings("SpringPropertySource")
 @Component
 @Slf4j
-@PropertySource("telegram.properties")
-public class BotResources {
+public class Resources {
     public static String SOURCE = "src" + File.separator + "main" + File.separator + "resources" + File.separator + "CodeData";
+    public static String BUY_ALL = "BUY_ALL";
+    public static String BUY_ONE = "BUY_ONE";
 
-    public static String BUY_ALL_STRING = "BUY_ALL";
-    public static String BUY_ONE_STRING = "BUY_ONE";
-    @Value("${admin.chatId}")
-    public long ADMIN_CHATID;
 
     public static InlineKeyboardMarkup getBuyMenu() {
         InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
@@ -29,8 +23,8 @@ public class BotResources {
         List<InlineKeyboardButton> keyboardRow = new ArrayList<>();
         InlineKeyboardButton button1 = new InlineKeyboardButton("Купить все блоки");
         InlineKeyboardButton button2 = new InlineKeyboardButton("Купить один блок");
-        button1.setCallbackData(BUY_ALL_STRING);
-        button2.setCallbackData(BUY_ONE_STRING);
+        button1.setCallbackData(BUY_ALL);
+        button2.setCallbackData(BUY_ONE);
         keyboardRow.add(button1);
         keyboardRow.add(button2);
         keyboardRows.add(keyboardRow);

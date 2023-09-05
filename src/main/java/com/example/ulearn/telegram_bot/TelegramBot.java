@@ -7,7 +7,6 @@ import com.example.ulearn.telegram_bot.model.User;
 import com.example.ulearn.telegram_bot.model.repo.UserRepository;
 import com.example.ulearn.telegram_bot.service.PaymentService;
 import com.example.ulearn.telegram_bot.service.UserService;
-import com.example.ulearn.telegram_bot.service.source.BotResources;
 import com.vdurmont.emoji.EmojiParser;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +25,7 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import java.io.File;
 import java.util.*;
 
-import static com.example.ulearn.telegram_bot.service.source.BotResources.*;
+import static com.example.ulearn.telegram_bot.service.source.Resources.*;
 import static com.example.ulearn.telegram_bot.service.tools.SendMessageTools.sendMessage;
 
 @SuppressWarnings("OptionalGetWithoutIsPresent")
@@ -35,16 +34,14 @@ import static com.example.ulearn.telegram_bot.service.tools.SendMessageTools.sen
 public class TelegramBot extends TelegramLongPollingBot {
     private final BotConfig config;
     private final UserRepository userRepository;
-    private final BotResources source;
     private final UserService userService;
     private final PaymentService paymentService;
 
     @Autowired
-    public TelegramBot(BotConfig config, UserRepository userRepository, BotResources source, PaymentService paymentService, UserService userService) {
+    public TelegramBot(BotConfig config, UserRepository userRepository, PaymentService paymentService, UserService userService) {
         super(config.getToken());
         this.config = config;
         this.userRepository = userRepository;
-        this.source = source;
         this.userService = userService;
         this.paymentService = paymentService;
         paymentService.restorePayments(this);
@@ -64,7 +61,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         if (update.hasMessage() && update.getMessage().hasText()) {
             String messageText = update.getMessage().getText();
             long chatId = update.getMessage().getChatId();
-            if (chatId == source.ADMIN_CHATID) {
+            if (chatId == userService.ADMIN_CHATID) {
                 if (adminCommandReceived(messageText)) return;
             }
             switch (messageText) {
@@ -97,9 +94,9 @@ public class TelegramBot extends TelegramLongPollingBot {
         long chatId = message.getChatId();
         EditMessageText editMessageText = new EditMessageText();
         // here two conditions below (BUY_ALL and BUY_ONE) for send user for payment action
-        if (callBackData.equals(BUY_ALL_STRING)) {
+        if (callBackData.equals(BUY_ALL)) {
             paymentService.proceedPayment(this, chatId, null, message);
-        } else if (callBackData.equals(BUY_ONE_STRING)) {
+        } else if (callBackData.equals(BUY_ONE)) {
             // here bot sends user block choosing form in order to know which block the client wants to buy
             editMessageText.setText("Теперь, пожалуйста, выберите блок, который хотите купить");
             editMessageText.setReplyMarkup(getBlockChoosingMenu());
@@ -115,11 +112,10 @@ public class TelegramBot extends TelegramLongPollingBot {
             }
         } else if (callBackData.startsWith("get")) {
             // callBack on /show -> get any block command
-            User user = userRepository.findById(chatId).get();
             // finds the block by get+block regex
             Block blockToGet = userService.getBlocks().stream().filter(x -> ("get" + x.inEnglish()).equals(callBackData)).findFirst().get();
             editMessageText.setText("Получено!");
-            sendUserFiles(user, blockToGet);
+            sendUserFilesByBlock(chatId, blockToGet);
             sendMessage(this, editMessageText, message);
         }
     }
@@ -145,7 +141,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 Block block = userService.getBlocks().stream().filter(x -> x.inEnglish().equals(commands[2])).findFirst().get();
                 User user = userRepository.findById(chatId).get();
                 userService.registerBlocks(user, block);
-                sendMessage(this, source.ADMIN_CHATID, block + " is registered");
+                sendMessage(this, userService.ADMIN_CHATID, block + " is registered");
             }
             return true;
         } else if (messageText.contains("/registerAll") && commands[1].chars().allMatch(Character::isDigit) && chatIds.contains(Long.parseLong(commands[1])) && commands.length == 2) {
@@ -153,7 +149,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             long chatId = Long.parseLong(commands[1]);
             User user = userRepository.findById(chatId).get();
             userService.registerBlocks(user, userService.getBlocks());
-            sendMessage(this, source.ADMIN_CHATID, "All blocks are registered");
+            sendMessage(this, userService.ADMIN_CHATID, "All blocks are registered");
             log.info("Admin: all blocks registered chat_id " + chatId);
             return true;
         }
@@ -196,14 +192,13 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
-    private void sendUserFiles(User user, Block block) {
+    private void sendUserFilesByBlock(long chatId, Block block) {
         // sends all practices by block (it got like "get + block*" where * is a number of block) to user
         // if its empty sends only questions
-        long chatId = user.getChatId();
         List<File> files = new ArrayList<>();
         if (!block.getCodeUnits().isEmpty()) {
             for (CodeUnit codeUnit : block.getCodeUnits()) {
-                Optional<File> file = userService.getUserFileByCodeUnit(user, codeUnit);
+                Optional<File> file = userService.getUserFileByCodeUnit(chatId, codeUnit);
                 file.ifPresent(files::add);
             }
         }

@@ -8,7 +8,7 @@ import org.apache.commons.io.FilenameUtils;
 
 import java.io.File;
 
-import static com.example.ulearn.telegram_bot.service.source.BotResources.SOURCE;
+import static com.example.ulearn.telegram_bot.service.source.Resources.SOURCE;
 
 @SuppressWarnings("unused")
 @Getter
