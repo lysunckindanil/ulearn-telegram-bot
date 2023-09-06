@@ -4,12 +4,14 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.io.Serializable;
 import java.util.Date;
 
-@Data
+@Getter
+@Setter
 @Entity
 @Table(name = "payments")
 public class Payment implements Serializable {
@@ -23,4 +25,14 @@ public class Payment implements Serializable {
     private String status;
     @Column(length = 16384)
     private String message;
+
+    @Override
+    public String toString() {
+        return "Payment{" +
+                "id='" + id + '\'' +
+                ", chatId=" + chatId +
+                ", blocks='" + blocks + '\'' +
+                ", date=" + date +
+                '}';
+    }
 }

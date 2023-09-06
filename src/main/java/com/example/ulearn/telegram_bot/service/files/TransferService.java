@@ -20,13 +20,16 @@ public class TransferService {
     }
 
     public void transferFabricFile(Path file, Path pattern, Path destination, Path transferTo) throws IOException {
-        File fabricFile = generatorService.getFabricFile(file, pattern, destination);
+        File fabricFile;
+        try {
+            fabricFile = generatorService.getFabricFile(file, pattern, destination);
+        } catch (NullPointerException e) {
+            throw new IOException();
+        }
         Files.move(fabricFile.toPath(), Path.of(transferTo + File.separator + fabricFile.getName()));
-
     }
 
     public void transferFile(Path file, Path transferTo) throws IOException {
         Files.copy(file, Path.of(transferTo + File.separator + file.getFileName()));
-
     }
 }

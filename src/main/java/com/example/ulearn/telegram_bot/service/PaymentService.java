@@ -113,7 +113,15 @@ public class PaymentService {
 
             // gets response whether user has paid or not
             // changes editMessageText due to payment description
-            String textToUserResponse = handleResponse(payment, block);
+            String textToUserResponse;
+            try {
+                textToUserResponse = handleResponse(payment, block);
+                payment.setStatus("completed");
+            } catch (RuntimeException e) {
+                payment.setStatus("error");
+                log.error("Payment error: " + payment);
+                textToUserResponse = "Просим прощения, произошла непредвиденная ошибка при покупке блоков. Обратитесь, пожалуйста, в поддержку /help!";
+            }
 
             // deletes link in replyMarkup in order it wouldn't be available to pay after out of time
             // sets text of the response
@@ -122,7 +130,6 @@ public class PaymentService {
             sendMessage(bot, editMessageText, message);
 
             // status completed if all's gone right no matter was it paid, cancelled or out of time
-            payment.setStatus("completed");
             paymentRepository.save(payment);
         };
         Thread thread = new Thread(task);
@@ -156,13 +163,19 @@ public class PaymentService {
                     if (!payment.getBlocks().isEmpty())
                         block = userService.getBlocks().stream().filter(x -> x.inEnglish().equals(payment.getBlocks())).findFirst().get();
                     else block = null;
-                    String textToUserResponse = handleResponse(payment, block);
-
+                    String textToUserResponse;
+                    try {
+                        textToUserResponse = handleResponse(payment, block);
+                        payment.setStatus("completed with restore");
+                    } catch (RuntimeException e) {
+                        payment.setStatus("error");
+                        log.error("Payment error: " + payment);
+                        textToUserResponse = "Просим прощение, произошла непредвиденная ошибка при покупке блоков. Обратитесь, пожалуйста, в поддержку /help!";
+                    }
                     // sets text of the response
                     editMessageText.setText(textToUserResponse);
                     editMessageText.setReplyMarkup(null);
                     sendMessage(bot, editMessageText, message);
-                    payment.setStatus("completed with restore");
                     paymentRepository.save(payment);
                 };
                 Thread thread = new Thread(task);
@@ -192,7 +205,6 @@ public class PaymentService {
             }
         } else if (response == -1) {
             log.info("ChatId " + chatId + " cancelled payment payment_id " + id);
-
             return EmojiParser.parseToUnicode("Заказ " + numberOfOrder + " отменен :persevere:\nСкорее всего платеж был отменен. Повторите покупку или напишите в поддержку!");
         } else if (response == 0) {
             log.info("ChatId " + chatId + " is out of time payment_id " + id);

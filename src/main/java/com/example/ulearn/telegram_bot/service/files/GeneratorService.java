@@ -15,16 +15,15 @@ import java.util.Objects;
 public class GeneratorService {
 
     public File getFabricFile(Path file, Path pattern, Path destination) {
-
         // path to sources dir
         // path to folder where the method gets file or generated if it's empty
         if (isDirEmpty(destination)) {
+            // path where generator creates folder with generated files
+            Generator generator = new Generator();
             try {
-                // path where generator creates folder with generated files
-                Generator generator = new Generator();
                 generator.generate(file, pattern, destination);
             } catch (IOException e) {
-                log.error("Unable to generate files");
+                log.error("Unable to generate file, origin file: " + file);
             }
         }
         return Objects.requireNonNull(destination.toFile().listFiles())[0];

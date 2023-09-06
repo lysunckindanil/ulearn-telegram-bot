@@ -73,8 +73,13 @@ public class UserService {
         List<Block> userBlocks = user.getBlocks();
         for (Block block : blocksToAdd) {
             if (userBlocks.stream().noneMatch(x -> x.equals(block))) {
-                register(user, block);
-                log.info("Registered " + block + " chatId: " + user.getChatId());
+                try {
+                    register(user, block);
+                    log.info("Registered " + block.inEnglish() + " chatId: " + user.getChatId());
+                } catch (RuntimeException e) {
+                    log.error("Unable to register " + block.inEnglish() + " chatId: " + user.getChatId());
+                    throw new RuntimeException(e);
+                }
             } else {
                 log.warn(block + " is yet registered to the user");
             }
@@ -97,24 +102,31 @@ public class UserService {
         }
         for (CodeUnit codeUnit : block.getCodeUnits()) {
             if (codeUnit.isFabricate()) {
+                // path to original file
                 Path original = codeUnit.getOriginal().toPath();
+                // path to pattern to generate files
                 Path pattern = Path.of(PATTERN_FILES + File.separator + codeUnit.getOriginal().getName());
+                // path to where files will be generated
                 Path destination = Path.of(FORMATTED_FILES + File.separator + codeUnit.getName());
                 try {
+                    // adds block to user if everything went right only
                     transferService.transferFabricFile(original, pattern, destination, transferTo);
                 } catch (IOException e) {
-                    log.error("Unable to transfer fabric file chatId: " + user.getChatId());
+                    log.error("Unable to transfer fabric file chatId: " + user.getChatId() + " block: " + block.inEnglish());
+                    throw new RuntimeException();
                 }
             } else {
                 try {
+                    // adds block to user if everything went right only
                     transferService.transferFile(codeUnit.getOriginal().toPath(), transferTo);
                 } catch (IOException e) {
-                    log.error("Unable to transfer file chatId: " + user.getChatId());
+                    log.error("Unable to transfer file chatId: " + user.getChatId() + " block: " + block.inEnglish());
+                    throw new RuntimeException();
                 }
             }
-
         }
         user.addBlock(block);
+
     }
 
 }
