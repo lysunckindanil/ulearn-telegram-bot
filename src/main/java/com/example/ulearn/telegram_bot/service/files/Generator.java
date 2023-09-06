@@ -1,4 +1,4 @@
-package com.example.ulearn.telegram_bot.service.fabricate;
+package com.example.ulearn.telegram_bot.service.files;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;

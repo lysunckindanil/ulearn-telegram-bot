@@ -6,6 +6,7 @@ import com.example.ulearn.telegram_bot.model.CodeUnit;
 import com.example.ulearn.telegram_bot.model.User;
 import com.example.ulearn.telegram_bot.model.repo.BlockRepository;
 import com.example.ulearn.telegram_bot.model.repo.UserRepository;
+import com.example.ulearn.telegram_bot.service.files.TransferService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -64,6 +65,8 @@ public class UserService {
         }
         return files;
     }
+
+    // registration blocks to users
 
     public void registerBlocks(User user, List<Block> blocksToAdd) {
         // add all blocks user doesn't have to database and resources

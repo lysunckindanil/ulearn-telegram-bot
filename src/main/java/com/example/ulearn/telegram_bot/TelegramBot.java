@@ -80,7 +80,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                         sendMessage(this, chatId, text);
                     } else sendMessage(this, chatId, paymentService.getChoosingTwoOptionsText(), getBuyMenu());
                 }
-                case "/help" -> sendMessage(this, chatId, getHelpText());
+                case "/help" -> sendHelpMessage(update.getMessage());
                 default -> {
                     String text = EmojiParser.parseToUnicode("Простите, но я вас не понимаю, чтобы посмотреть мои команды введите /help :relieved:");
                     sendMessage(this, chatId, text);
@@ -159,8 +159,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private void startCommandReceived(Message message) {
-        String answer = "Привет, " + message.getChat().getFirstName();
-        sendMessage(this, message.getChatId(), answer);
+        sendHelpMessage(message);
         if (!userRepository.existsById(message.getChatId())) {
             User user = new User();
             user.setChatId(message.getChatId());
@@ -169,7 +168,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             userService.registerBlocks(user, new Block(1));
             userRepository.save(user);
         }
-    } //todo change text
+    }
 
     private void showUserFiles(User user) {
         // differs from getUserFiles that sends to user all blocks and practices he bought (no files will be sent)
@@ -198,7 +197,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         // if its empty sends only questions
         List<File> files = userService.getUserFilesByBlock(chatId, block);
         if (files.isEmpty()) {
-            sendMessage(this, chatId, "Я не нашел у вас доступных практик этого блока");
+            sendMessage(this, chatId, "Я не нашел доступных практик этого блока");
             sendQuestionsByBlock(chatId, block);
         } else {
             sendMessage(this, chatId, "Ваши практики " + block.inRussian() + "а:");
@@ -215,6 +214,11 @@ public class TelegramBot extends TelegramLongPollingBot {
             sendMessage(this, chatId, files, "Ваши контрольные вопросы " + block.inRussian() + "а"); // sends media group to user
     }
 
+    public void sendHelpMessage(Message message) {
+        InlineKeyboardMarkup inlineKeyboardMarkup = getOneButtonLinkKeyboardMarkup("Видео инструкция", "https://disk.yandex.com/i/CZaD3BIYTqER1w");
+        sendMessage(this, message.getChatId(), getHelpText(message.getChat()), inlineKeyboardMarkup);
+
+    }
 
     @Override
     public String getBotUsername() {

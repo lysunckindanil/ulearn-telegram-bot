@@ -7,6 +7,7 @@ import lombok.Setter;
 import org.apache.commons.io.FilenameUtils;
 
 import java.io.File;
+import java.io.Serializable;
 
 
 @SuppressWarnings("unused")
@@ -15,12 +16,12 @@ import java.io.File;
 @Entity
 @Table(name = "codeunits")
 @NoArgsConstructor
-public class CodeUnit {
+public class CodeUnit implements Serializable {
     @Id
     private String name;
     private File original;
     private boolean isFabricate;
-    @ManyToOne(cascade = CascadeType.REFRESH, fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.EAGER)
     private Block block;
 
     public CodeUnit(File original, boolean isFabricate) {

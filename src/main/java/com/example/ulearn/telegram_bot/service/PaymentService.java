@@ -16,12 +16,11 @@ import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.Message;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 
 import java.io.IOException;
 import java.util.*;
 
+import static com.example.ulearn.telegram_bot.service.source.Resources.getOneButtonLinkKeyboardMarkup;
 import static com.example.ulearn.telegram_bot.service.tools.SendMessageTools.sendMessage;
 import static com.example.ulearn.telegram_bot.service.tools.SerializationTools.deserializeFromString;
 import static com.example.ulearn.telegram_bot.service.tools.SerializationTools.serializeToString;
@@ -38,14 +37,54 @@ public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final UserRepository userRepository;
     private final UserService userService;
-    @Value("${server.url}")
-    private String SERVER_URL;
-    @Value("${price.all_blocks}")
-    private int PRICE_ALL_BLOCKS;
     @Value("${price.one_block}")
     public int PRICE_ONE_BLOCK;
     @Value("${payment.limit}")
     public int LIMIT;
+    @Value("${server.url}")
+    private String SERVER_URL;
+    @Value("${price.all_blocks}")
+    private int PRICE_ALL_BLOCKS;
+
+    private static int checkPaymentStatusLoop(String id, String url, int limit) {
+        Map<String, String> jsonMapToGetStatus = new HashMap<>();
+        jsonMapToGetStatus.put("bot_event", "check_id");
+        jsonMapToGetStatus.put("id", String.valueOf(id));
+        JSONObject jsonToGetStatus = new JSONObject(jsonMapToGetStatus);
+        // json arguments: bot_event, id
+        // loop of sending requests
+        for (int i = 0; i < limit; i++) {
+            try {
+                Thread.sleep(1000);
+                String response = (String) sendJson(jsonToGetStatus, url).get("checking_result");
+                if (response != null) {
+                    if (response.equals("payment.succeeded")) {
+                        return 1;
+                    } else if (response.equals("payment.canceled")) {
+                        return -1;
+                    } else if (i == limit - 1) {
+                        return 0;
+                    }
+                }
+            } catch (InterruptedException e) {
+                log.error("Thread sleep error");
+            }
+        }
+        return 0;
+    }
+
+    private static JSONObject getUrlJson(String payment_description, int price, String url) {
+        // creates json request to get link for payment
+        Map<String, String> jsonMapToGetPayment = new HashMap<>();
+        jsonMapToGetPayment.put("bot_event", "get_url");
+        jsonMapToGetPayment.put("description", payment_description);
+        jsonMapToGetPayment.put("price", String.valueOf(price));
+        JSONObject jsonToGetPayment = new JSONObject(jsonMapToGetPayment);
+        // json arguments: bot_event, description, price
+
+        // sending json request
+        return sendJson(jsonToGetPayment, url);
+    }
 
     public void proceedPayment(TelegramBot bot, long chatId, Block block, Message message) {
         Runnable task = () -> {
@@ -64,7 +103,7 @@ public class PaymentService {
             // sends information about order to user, with link to pay
             EditMessageText editMessageText = new EditMessageText();
             editMessageText.setText(description);
-            editMessageText.setReplyMarkup(getOneButtonKeyboardMarkup("Оплатить", url));
+            editMessageText.setReplyMarkup(getOneButtonLinkKeyboardMarkup("Оплатить", url));
             sendMessage(bot, editMessageText, message);
             log.info("Created order " + numberOfOrder + " chatId " + chatId + " payment_id " + id);
 
@@ -181,61 +220,8 @@ public class PaymentService {
         return payment;
     }
 
-    private static int checkPaymentStatusLoop(String id, String url, int limit) {
-        Map<String, String> jsonMapToGetStatus = new HashMap<>();
-        jsonMapToGetStatus.put("bot_event", "check_id");
-        jsonMapToGetStatus.put("id", String.valueOf(id));
-        JSONObject jsonToGetStatus = new JSONObject(jsonMapToGetStatus);
-        // json arguments: bot_event, id
-        // loop of sending requests
-        for (int i = 0; i < limit; i++) {
-            try {
-                Thread.sleep(1000);
-                String response = (String) sendJson(jsonToGetStatus, url).get("checking_result");
-                if (response != null) {
-                    if (response.equals("payment.succeeded")) {
-                        return 1;
-                    } else if (response.equals("payment.canceled")) {
-                        return -1;
-                    } else if (i == limit - 1) {
-                        return 0;
-                    }
-                }
-            } catch (InterruptedException e) {
-                log.error("Thread sleep error");
-            }
-        }
-        return 0;
-    }
-
-    private static JSONObject getUrlJson(String payment_description, int price, String url) {
-        // creates json request to get link for payment
-        Map<String, String> jsonMapToGetPayment = new HashMap<>();
-        jsonMapToGetPayment.put("bot_event", "get_url");
-        jsonMapToGetPayment.put("description", payment_description);
-        jsonMapToGetPayment.put("price", String.valueOf(price));
-        JSONObject jsonToGetPayment = new JSONObject(jsonMapToGetPayment);
-        // json arguments: bot_event, description, price
-
-        // sending json request
-        return sendJson(jsonToGetPayment, url);
-    }
-
 
     // static data
-
-    @SuppressWarnings("SameParameterValue")
-    private InlineKeyboardMarkup getOneButtonKeyboardMarkup(String text, String url) {
-        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
-        List<List<InlineKeyboardButton>> keyboardRows = new ArrayList<>();
-        List<InlineKeyboardButton> keyboardRow = new ArrayList<>();
-        InlineKeyboardButton button = new InlineKeyboardButton(text);
-        button.setUrl(url);
-        keyboardRow.add(button);
-        keyboardRows.add(keyboardRow);
-        inlineKeyboardMarkup.setKeyboard(keyboardRows);
-        return inlineKeyboardMarkup;
-    }
 
     private String getOneBlockDescriptionPaymentText(Block block) {
         StringJoiner joiner = new StringJoiner("\n");

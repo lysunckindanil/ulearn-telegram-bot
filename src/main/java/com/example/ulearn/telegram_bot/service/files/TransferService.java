@@ -1,6 +1,6 @@
-package com.example.ulearn.telegram_bot.service;
+package com.example.ulearn.telegram_bot.service.files;
 
-import com.example.ulearn.telegram_bot.service.fabricate.GeneratorService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -11,6 +11,7 @@ import java.nio.file.Path;
 import java.util.Optional;
 
 @Service
+@Slf4j
 public class TransferService {
     private final GeneratorService generatorService;
 
@@ -25,7 +26,7 @@ public class TransferService {
             try {
                 Files.move(fabricFile.get().toPath(), Path.of(transferTo + File.separator + fabricFile.get().getName()));
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                log.error("Unable to move, file already exists");
             }
         }
     }
@@ -34,7 +35,7 @@ public class TransferService {
         try {
             Files.copy(file, Path.of(transferTo + File.separator + file.getFileName()));
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            log.error("Unable to copy, file already exists");
         }
     }
 }

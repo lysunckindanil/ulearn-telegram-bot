@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -15,14 +16,14 @@ import java.util.Objects;
 @Entity
 @NoArgsConstructor
 @Table(name = "blocks")
-public class Block implements Comparable<Block> {
+public class Block implements Comparable<Block>, Serializable {
     public Block(int number) {
         this.number = number;
     }
 
     @Id
     private int number;
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, mappedBy = "block")
+    @OneToMany(fetch = FetchType.EAGER, mappedBy = "block")
     private List<CodeUnit> codeUnits = new ArrayList<>();
 
     public String inRussian() {

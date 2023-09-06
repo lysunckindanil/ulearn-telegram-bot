@@ -1,7 +1,9 @@
 package com.example.ulearn.telegram_bot.service.source;
 
+import com.vdurmont.emoji.EmojiParser;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 
@@ -20,7 +22,6 @@ public class Resources {
     public static final String USERS_CODE_FILES = SOURCE + File.separator + "UsersCodeFiles";
     public static final String FORMATTED_FILES = SOURCE + File.separator + "CodeFormattedFiles";
     public static final String PATTERN_FILES = SOURCE + File.separator + "CodePatternFiles";
-
 
     public static InlineKeyboardMarkup getBuyMenu() {
         InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
@@ -93,10 +94,21 @@ public class Resources {
         return inlineKeyboardMarkup;
     }
 
-    public static String getHelpText() {
-
-        return "Оплата проводится через систему платежей ЮКасса. После оплаты вам будут доступны выбранные блоки. " + "Чтобы их получить, перейдите /show.";
+    public static InlineKeyboardMarkup getOneButtonLinkKeyboardMarkup(String text, String url) {
+        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> keyboardRows = new ArrayList<>();
+        List<InlineKeyboardButton> keyboardRow = new ArrayList<>();
+        InlineKeyboardButton button = new InlineKeyboardButton(text);
+        button.setUrl(url);
+        keyboardRow.add(button);
+        keyboardRows.add(keyboardRow);
+        inlineKeyboardMarkup.setKeyboard(keyboardRows);
+        return inlineKeyboardMarkup;
     }
 
+    public static String getHelpText(Chat chat) {
+        String name = chat.getFirstName() == null ? chat.getUserName() : chat.getFirstName();
+        return EmojiParser.parseToUnicode("Привет, " + name + "!\n" + "Я продаю практики и ответы на контрольные вопросы с сайта Ulearn по Java :innocent:\n" + "Пару положений по функционалу:\n" + ":white_check_mark: Можно купить все блоки или один. Прошу внимательно читать, что покупаете, все написано в описании платежа! Контрольные вопросы первого блока вы получаете бесплатно.\n" + ":white_check_mark: Код практик у всех индивидуальный, поэтому риск получить плагиат минимален. Но я все же рекомендую изменить имена некоторых перемеренных, тем более в IDEA это делается за пару секунд (SHIFT + F6).\n" + ":white_check_mark: После покупки вы получите все практики блока в формате txt и скриншоты ответов на его контрольные вопросы. Все вы сможете просмотреть здесь /show.\n" + ":white_check_mark: Покупка осуществляется через систему платежей yookassa. Там доступны все популярные способы платы, поэтому проблем быть не должно.\n" + ":white_check_mark: В случае ошибки покупки или если код не работает, то пишите мне, ссылка в профиле бота.\n");
+    }
 
 }

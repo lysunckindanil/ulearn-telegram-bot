@@ -6,12 +6,13 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.Data;
 
+import java.io.Serializable;
 import java.util.Date;
 
 @Data
 @Entity
 @Table(name = "payments")
-public class Payment {
+public class Payment implements Serializable {
     @Id
     private Integer number_of_order;
     private String id;

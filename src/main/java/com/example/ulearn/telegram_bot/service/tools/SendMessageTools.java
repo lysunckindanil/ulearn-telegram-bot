@@ -5,6 +5,7 @@ import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
 import org.telegram.telegrambots.meta.api.methods.send.SendMediaGroup;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.send.SendVideo;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Message;
@@ -101,5 +102,15 @@ public class SendMessageTools {
             log.error("Unable to send media group message");
         }
     }
+
+    public static void sendMessage(TelegramLongPollingBot bot, long chatId, InputFile videoFile) {
+        SendVideo sendVideo = new SendVideo(String.valueOf(chatId), videoFile);
+        try {
+            bot.execute(sendVideo);
+        } catch (TelegramApiException e) {
+            log.error("Unable to send video message");
+        }
+    }
+
 }
 
