@@ -92,7 +92,7 @@ public class UserService {
             try {
                 Files.createDirectories(transferTo);
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                log.error("Unable to create user folder: " + user.getChatId());
             }
         }
         for (CodeUnit codeUnit : block.getCodeUnits()) {
@@ -100,9 +100,17 @@ public class UserService {
                 Path original = codeUnit.getOriginal().toPath();
                 Path pattern = Path.of(PATTERN_FILES + File.separator + codeUnit.getOriginal().getName());
                 Path destination = Path.of(FORMATTED_FILES + File.separator + codeUnit.getName());
-                transferService.transferFabricFile(original, pattern, destination, transferTo);
+                try {
+                    transferService.transferFabricFile(original, pattern, destination, transferTo);
+                } catch (IOException e) {
+                    log.error("Unable to transfer fabric file chatId: " + user.getChatId());
+                }
             } else {
-                transferService.transferFile(codeUnit.getOriginal().toPath(), transferTo);
+                try {
+                    transferService.transferFile(codeUnit.getOriginal().toPath(), transferTo);
+                } catch (IOException e) {
+                    log.error("Unable to transfer file chatId: " + user.getChatId());
+                }
             }
 
         }

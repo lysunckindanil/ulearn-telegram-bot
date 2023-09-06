@@ -75,10 +75,9 @@ public class TelegramBot extends TelegramLongPollingBot {
                     else showUserFiles(user);
                 }
                 case "/buy" -> {
-                    if (userRepository.findById(chatId).get().getBlocks().size() == userService.getBlocks().size()) {
-                        String text = EmojiParser.parseToUnicode("У вас уже куплены все блоки, вы большой молодец :blush:");
-                        sendMessage(this, chatId, text);
-                    } else sendMessage(this, chatId, paymentService.getChoosingTwoOptionsText(), getBuyMenu());
+                    if (userRepository.findById(chatId).get().getBlocks().size() == userService.getBlocks().size())
+                        sendMessage(this, chatId, EmojiParser.parseToUnicode("У вас уже куплены все блоки, вы большой молодец :blush:"));
+                    else sendMessage(this, chatId, paymentService.getChoosingTwoOptionsText(), getBuyMenu());
                 }
                 case "/help" -> sendHelpMessage(update.getMessage());
                 default -> {
@@ -178,13 +177,16 @@ public class TelegramBot extends TelegramLongPollingBot {
         //joiner to send messages
         //it sends each name of block and practices separately
         for (Block block : user.getBlocks()) {
-            joiner.add("*" + block.inRussian() + "*"); //it makes it look like *блок i*
+            joiner.add(EmojiParser.parseToUnicode(block.inRussian().toUpperCase()));
             // if there are no code units then sends other message
             if (block.getCodeUnits().isEmpty()) joiner.add("Только контрольные вопросы");
             else {
                 for (CodeUnit codeUnit : block.getCodeUnits()) {
-                    joiner.add(codeUnit.getName());
+                    if (codeUnit.isFabricate())
+                        joiner.add(EmojiParser.parseToUnicode(":small_blue_diamond:Практика " + codeUnit.getName()));
+                    else joiner.add(EmojiParser.parseToUnicode(":small_blue_diamond:Задание " + codeUnit.getName()));
                 }
+                joiner.add(EmojiParser.parseToUnicode(":small_blue_diamond:Ответы на контрольные вопросы"));
             }
             InlineKeyboardMarkup inlineKeyboardMarkup = getOneButtonKeyboardMarkup("Получить", "get" + block.inEnglish());
             sendMessage(this, user.getChatId(), joiner.toString(), inlineKeyboardMarkup);
@@ -196,15 +198,12 @@ public class TelegramBot extends TelegramLongPollingBot {
         // sends all practices by block (it got like "get + block*" where * is a number of block) to user
         // if its empty sends only questions
         List<File> files = userService.getUserFilesByBlock(chatId, block);
-        if (files.isEmpty()) {
-            sendMessage(this, chatId, "Я не нашел доступных практик этого блока");
-            sendQuestionsByBlock(chatId, block);
-        } else {
+        if (!files.isEmpty()) {
             sendMessage(this, chatId, "Ваши практики " + block.inRussian() + "а:");
             for (File file : files)
                 sendMessage(this, chatId, file);
-            sendQuestionsByBlock(chatId, block);
         }
+        sendQuestionsByBlock(chatId, block);
     }
 
     public void sendQuestionsByBlock(long chatId, Block block) {

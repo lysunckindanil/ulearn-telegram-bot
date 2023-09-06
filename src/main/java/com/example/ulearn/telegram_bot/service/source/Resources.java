@@ -27,8 +27,8 @@ public class Resources {
         InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> keyboardRows = new ArrayList<>();
         List<InlineKeyboardButton> keyboardRow = new ArrayList<>();
-        InlineKeyboardButton button1 = new InlineKeyboardButton("Купить все блоки");
-        InlineKeyboardButton button2 = new InlineKeyboardButton("Купить один блок");
+        InlineKeyboardButton button1 = new InlineKeyboardButton("Все");
+        InlineKeyboardButton button2 = new InlineKeyboardButton("Один");
         button1.setCallbackData(BUY_ALL);
         button2.setCallbackData(BUY_ONE);
         keyboardRow.add(button1);

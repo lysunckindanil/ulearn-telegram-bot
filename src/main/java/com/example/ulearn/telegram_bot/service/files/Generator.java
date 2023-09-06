@@ -49,14 +49,6 @@ public class Generator {
         saveFormattedStrings(formattedStrings, destination, name);
     }
 
-    @SuppressWarnings("unused")
-    public void generate(Path original, Path pattern, Path destination, int limit) throws IOException {
-        String originalString = readFile(original);
-        List<String> formattedStrings = getFormattedStrings(pattern, originalString, limit);
-        String folder = FilenameUtils.removeExtension(original.getFileName().toString());
-        saveFormattedStrings(formattedStrings, destination, folder);
-    }
-
     private static String readFile(Path file) {
         // reads file to string
         StringBuilder code = new StringBuilder();

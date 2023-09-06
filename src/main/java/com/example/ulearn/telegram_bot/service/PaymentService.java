@@ -225,10 +225,14 @@ public class PaymentService {
 
     private String getOneBlockDescriptionPaymentText(Block block) {
         StringJoiner joiner = new StringJoiner("\n");
-        joiner.add("Вы купите практики " + block.inRussian().replace(" ", "го ") + "a:");
+        joiner.add("После покупки " + block.inRussian().replace(" ", "го ") + "a вы получите:");
         for (CodeUnit codeUnit : block.getCodeUnits()) {
-            joiner.add(codeUnit.getName());
+            if (codeUnit.isFabricate())
+                joiner.add(EmojiParser.parseToUnicode(":small_blue_diamond:Практика " + codeUnit.getName()));
+            else joiner.add(EmojiParser.parseToUnicode(":small_blue_diamond:Задание " + codeUnit.getName()));
         }
+
+        joiner.add(EmojiParser.parseToUnicode(":small_blue_diamond:Ответы на контрольные вопросы"));
         joiner.add("Цена " + PRICE_ONE_BLOCK + " рублей");
         return joiner.toString();
     }
@@ -238,6 +242,6 @@ public class PaymentService {
     }
 
     public String getChoosingTwoOptionsText() {
-        return EmojiParser.parseToUnicode(String.format("Вы можете купить все блоки или только один.\nЦена всех блоков - %d, одного - %d рублей :innocent:", PRICE_ALL_BLOCKS, PRICE_ONE_BLOCK));
+        return EmojiParser.parseToUnicode(String.format("На данный момент цена всех блоков - %d, одного - %d рублей :innocent:\nСколько хотите купить?", PRICE_ALL_BLOCKS, PRICE_ONE_BLOCK));
     }
 }
