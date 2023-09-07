@@ -1,4 +1,4 @@
-package com.example.ulearn.telegram_bot.service.tools;
+package com.example.ulearn.telegram_bot.tools;
 
 import java.io.*;
 import java.util.Base64;

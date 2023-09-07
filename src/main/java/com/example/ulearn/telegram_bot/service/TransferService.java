@@ -1,5 +1,6 @@
-package com.example.ulearn.telegram_bot.service.files;
+package com.example.ulearn.telegram_bot.service;
 
+import com.example.ulearn.telegram_bot.service.GeneratorService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

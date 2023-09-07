@@ -7,7 +7,7 @@ import com.example.ulearn.telegram_bot.model.User;
 import com.example.ulearn.telegram_bot.model.repo.UserRepository;
 import com.example.ulearn.telegram_bot.service.PaymentService;
 import com.example.ulearn.telegram_bot.service.UserService;
-import com.example.ulearn.telegram_bot.service.files.BlockRegistrationException;
+import com.example.ulearn.telegram_bot.exceptions.BlockRegistrationException;
 import com.vdurmont.emoji.EmojiParser;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -32,8 +32,8 @@ import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.regex.Pattern;
 
-import static com.example.ulearn.telegram_bot.service.source.Resources.*;
-import static com.example.ulearn.telegram_bot.service.tools.SendMessageTools.sendMessage;
+import static com.example.ulearn.telegram_bot.source.Resources.*;
+import static com.example.ulearn.telegram_bot.tools.SendMessageTools.sendMessage;
 
 @SuppressWarnings("OptionalGetWithoutIsPresent")
 @Slf4j

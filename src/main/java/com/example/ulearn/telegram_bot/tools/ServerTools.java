@@ -1,4 +1,4 @@
-package com.example.ulearn.telegram_bot.service.tools;
+package com.example.ulearn.telegram_bot.tools;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpResponse;

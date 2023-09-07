@@ -6,8 +6,7 @@ import com.example.ulearn.telegram_bot.model.CodeUnit;
 import com.example.ulearn.telegram_bot.model.User;
 import com.example.ulearn.telegram_bot.model.repo.BlockRepository;
 import com.example.ulearn.telegram_bot.model.repo.UserRepository;
-import com.example.ulearn.telegram_bot.service.files.BlockRegistrationException;
-import com.example.ulearn.telegram_bot.service.files.TransferService;
+import com.example.ulearn.telegram_bot.exceptions.BlockRegistrationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,7 +19,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
-import static com.example.ulearn.telegram_bot.service.source.Resources.*;
+import static com.example.ulearn.telegram_bot.source.Resources.*;
 
 
 @SuppressWarnings("SpringPropertySource")

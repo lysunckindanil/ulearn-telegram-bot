@@ -1,4 +1,4 @@
-package com.example.ulearn.telegram_bot.service.source;
+package com.example.ulearn.telegram_bot.source;
 
 import com.example.ulearn.telegram_bot.model.Block;
 import com.vdurmont.emoji.EmojiParser;

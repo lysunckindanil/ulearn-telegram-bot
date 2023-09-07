@@ -1,5 +1,6 @@
-package com.example.ulearn.telegram_bot.service.files;
+package com.example.ulearn.telegram_bot.service;
 
+import com.example.ulearn.telegram_bot.tools.Generator;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -15,15 +16,15 @@ import java.util.Objects;
 public class GeneratorService {
 
     public File getFabricFile(Path file, Path pattern, Path destination) {
-        // path to sources dir
-        // path to folder where the method gets file or generated if it's empty
+        // method throws null if something went wrong,
+        // whatever some error in generator or no files were generated
         if (isDirEmpty(destination)) {
-            // path where generator creates folder with generated files
             Generator generator = new Generator();
             try {
                 generator.generate(file, pattern, destination);
             } catch (IOException e) {
                 log.error("Unable to generate file, origin file: " + file);
+                throw new NullPointerException();
             }
         }
         return Objects.requireNonNull(destination.toFile().listFiles())[0];
