@@ -1,13 +1,13 @@
 package com.example.ulearn.telegram_bot;
 
 import com.example.ulearn.telegram_bot.config.BotConfig;
+import com.example.ulearn.telegram_bot.exceptions.BlockRegistrationException;
 import com.example.ulearn.telegram_bot.model.Block;
 import com.example.ulearn.telegram_bot.model.CodeUnit;
 import com.example.ulearn.telegram_bot.model.User;
 import com.example.ulearn.telegram_bot.model.repo.UserRepository;
 import com.example.ulearn.telegram_bot.service.PaymentService;
 import com.example.ulearn.telegram_bot.service.UserService;
-import com.example.ulearn.telegram_bot.exceptions.BlockRegistrationException;
 import com.vdurmont.emoji.EmojiParser;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -25,6 +25,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -266,7 +267,12 @@ public class TelegramBot extends TelegramLongPollingBot {
     private void sendUserFilesByBlock(long chatId, Block block) {
         // sends all practices by block (it got like "get + block*" where * is a number of block) to user
         // if its empty sends only questions
-        List<File> files = userService.getUserFilesByBlock(chatId, block);
+        List<File> files = new ArrayList<>();
+        try {
+            files = userService.getUserFilesByBlock(chatId, block);
+        } catch (FileNotFoundException e) {
+            sendMessage(this, chatId, "Произошла ошибка при загрузке ваших практик и заданий " + block.inRussian() + "a. Напишите, пожалуйста, в поддержку!");
+        }
         if (!files.isEmpty()) {
             sendMessage(this, chatId, "Ваши практики и задания " + block.inRussian() + "а:");
             for (File file : files)
@@ -277,9 +283,17 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     public void sendQuestionsByBlock(long chatId, Block block) {
         // sends ulearn questions to user
-        List<File> files = userService.getQuestionFilesByBlock(block);
-        if (!files.isEmpty())
-            sendMessage(this, chatId, files, "Ваши контрольные вопросы " + block.inRussian() + "а"); // sends media group to user
+        // if folder with the same name as the block exists and there are no files, it throws error
+        // if folder doesn't exist, then block is considered to be with no questions,
+        // therefore no messages related to questions will not be sent
+        List<File> files;
+        try {
+            files = userService.getQuestionFilesByBlock(block);
+            if (!files.isEmpty())
+                sendMessage(this, chatId, files, "Ваши контрольные вопросы " + block.inRussian() + "а"); // sends media group to user
+        } catch (FileNotFoundException e) {
+            sendMessage(this, chatId, "Произошла ошибка при загрузке ваших контрольных вопросов " + block.inRussian() + "a. Напишите, пожалуйста, в поддержку!"); // sends media group to user
+        }
     }
 
     public void sendHelpMessage(Message message) {

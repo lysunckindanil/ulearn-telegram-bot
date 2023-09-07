@@ -16,8 +16,10 @@ import java.util.Objects;
 public class GeneratorService {
 
     public File getFabricFile(Path file, Path pattern, Path destination) {
-        // method throws null if something went wrong,
-        // whatever some error in generator or no files were generated
+        // This method returns file from bot repository
+        // It can happen that there will be no files in bot repository,
+        // then calls generator to generate these files
+        // It throws null if something went wrong with generating fabric file
         if (isDirEmpty(destination)) {
             Generator generator = new Generator();
             try {
@@ -37,5 +39,4 @@ public class GeneratorService {
         }
         return true;
     }
-
 }

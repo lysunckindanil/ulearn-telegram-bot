@@ -1,7 +1,5 @@
 package com.example.ulearn.telegram_bot.service;
 
-import com.example.ulearn.telegram_bot.service.GeneratorService;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -11,7 +9,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 @Service
-@Slf4j
 public class TransferService {
     private final GeneratorService generatorService;
 
@@ -20,17 +17,16 @@ public class TransferService {
         this.generatorService = generatorService;
     }
 
-    public void transferFabricFile(Path file, Path pattern, Path destination, Path transferTo) throws IOException {
-        File fabricFile;
-        try {
-            fabricFile = generatorService.getFabricFile(file, pattern, destination);
-        } catch (NullPointerException e) {
-            throw new IOException();
-        }
+    public void transferFabricFile(Path file, Path pattern, Path destination, Path transferTo) throws IOException, NullPointerException {
+        // This method gets fabric file from GeneratorService
+        // Then it moves it to user's repository
+        // NullPointerException if something went wrong with getting fabric file
+        File fabricFile = generatorService.getFabricFile(file, pattern, destination);
         Files.move(fabricFile.toPath(), Path.of(transferTo + File.separator + fabricFile.getName()));
     }
 
     public void transferFile(Path file, Path transferTo) throws IOException {
+        // This method copies not fabric file to user's repository
         Files.copy(file, Path.of(transferTo + File.separator + file.getFileName()));
     }
 }

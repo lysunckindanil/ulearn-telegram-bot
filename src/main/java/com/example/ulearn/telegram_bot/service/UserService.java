@@ -1,12 +1,12 @@
 package com.example.ulearn.telegram_bot.service;
 
 
+import com.example.ulearn.telegram_bot.exceptions.BlockRegistrationException;
 import com.example.ulearn.telegram_bot.model.Block;
 import com.example.ulearn.telegram_bot.model.CodeUnit;
 import com.example.ulearn.telegram_bot.model.User;
 import com.example.ulearn.telegram_bot.model.repo.BlockRepository;
 import com.example.ulearn.telegram_bot.model.repo.UserRepository;
-import com.example.ulearn.telegram_bot.exceptions.BlockRegistrationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,6 +14,7 @@ import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -44,24 +45,37 @@ public class UserService {
         return blockRepository.findAll();
     }
 
-    public List<File> getUserFilesByBlock(long chatId, Block block) {
+    public List<File> getUserFilesByBlock(long chatId, Block block) throws FileNotFoundException {
+        // This method is needed to return list of files, which sendUserFilesByBlock method will send to user
+        // This method gets the files from user's repository
+        // If any of unit code's files wasn't found in user's directory, it throws exception
+        // It means that if block declares that there should code unit file,
+        // but it doesn't exist in user's directory, that means something went wrong
         List<File> files = new ArrayList<>();
         File directory = new File(USERS_CODE_FILES + File.separator + chatId);
         if (!block.getCodeUnits().isEmpty()) {
             for (CodeUnit codeUnit : block.getCodeUnits()) {
-                Optional<File> file = Arrays.stream(Objects.requireNonNull(directory.listFiles())).toList().stream().filter(x -> x.getName().contains(codeUnit.getName())).findFirst();
-                file.ifPresent(files::add);
+                File[] UserFiles = Objects.requireNonNull(directory.listFiles());
+                Optional<File> file = Arrays.stream(UserFiles).toList().stream().filter(x -> x.getName().contains(codeUnit.getName())).findFirst();
+                if (file.isPresent()) {
+                    files.add(file.get());
+                } else {
+                    throw new FileNotFoundException();
+                }
             }
         }
         return files;
     }
 
-    public List<File> getQuestionFilesByBlock(Block block) {
-        // gets questions from repository
+    public List<File> getQuestionFilesByBlock(Block block) throws FileNotFoundException {
+        // This method is needed to get question files from repository and return them to sendQuestionsByBlock method
+        // List of files is empty only once if directory of questions doesn't exist, it means block doesn't have questions
+        // Otherwise it means that something went wrong and throws exception
         List<File> files = new ArrayList<>(); // get list of files
         File dir = new File(DEFAULT_QUESTIONS_PATH + File.separator + block.inEnglish());
         if (dir.isDirectory()) {
             files = List.of(Objects.requireNonNull(dir.listFiles()));
+            if (files.isEmpty()) throw new FileNotFoundException();
         }
         return files;
     }
@@ -69,20 +83,16 @@ public class UserService {
     // registration blocks to users
 
     public void registerBlocks(User user, List<Block> blocksToAdd) throws BlockRegistrationException {
-        // add all blocks user doesn't have to database and resources
+        // This method defines which blocks user doesn't have.
+        // Then calls register method to transfer code units of the block
+        // All exceptions go to methods where this method will be called from,
+        // so it will allow to track errors
         List<Block> userBlocks = user.getBlocks();
         for (Block block : blocksToAdd) {
-            if (userBlocks.stream().noneMatch(x -> x.equals(block))) {
-                try {
-                    register(user, block);
-                    log.info("Registered " + block.inEnglish() + " chatId: " + user.getChatId());
-                } catch (BlockRegistrationException e) {
-                    log.error("Unable to register " + block.inEnglish() + " chatId: " + user.getChatId());
-                    throw new BlockRegistrationException();
-                }
-            } else {
-                log.warn(block + " is yet registered to the user");
-            }
+            if (userBlocks.stream().noneMatch(x -> x.equals(block)))
+                register(user, block);
+            else
+                log.error(block + " is yet registered to the user chatId: " + user.getChatId());
         }
         userRepository.save(user);
     }
@@ -92,12 +102,15 @@ public class UserService {
     }
 
     private void register(User user, Block block) throws BlockRegistrationException {
+        // This method moves files to user's folder
+        // The method throws BlockRegistrationException if something went wrong with transferring files
         Path transferTo = Path.of(USERS_CODE_FILES + File.separator + user.getChatId());
         if (!Files.exists(transferTo)) {
             try {
                 Files.createDirectories(transferTo);
             } catch (IOException e) {
-                log.error("Unable to create user folder: " + user.getChatId());
+                log.error("Unable to create user folder chatId: " + user.getChatId());
+                throw new BlockRegistrationException();
             }
         }
         for (CodeUnit codeUnit : block.getCodeUnits()) {
@@ -106,13 +119,17 @@ public class UserService {
                 Path original = codeUnit.getOriginal().toPath();
                 // path to pattern to generate files
                 Path pattern = Path.of(PATTERN_FILES + File.separator + codeUnit.getOriginal().getName());
-                // path to where files will be generated
+                // path to where files will be generated, folder name is name of code unit
                 Path destination = Path.of(FORMATTED_FILES + File.separator + codeUnit.getName());
                 try {
                     // adds block to user if everything went right only
                     transferService.transferFabricFile(original, pattern, destination, transferTo);
+                    log.info("Registered " + block.inEnglish() + " chatId: " + user.getChatId());
+                } catch (NullPointerException e) {
+                    log.error("Register error Unable to get fabric file chatId: " + user.getChatId() + " block: " + block.inEnglish());
+                    throw new BlockRegistrationException();
                 } catch (IOException e) {
-                    log.error("Unable to transfer fabric file chatId: " + user.getChatId() + " block: " + block.inEnglish());
+                    log.error("Register error unable to move fabric file chatId: " + user.getChatId() + " block: " + block.inEnglish());
                     throw new BlockRegistrationException();
                 }
             } else {
@@ -120,7 +137,7 @@ public class UserService {
                     // adds block to user if everything went right only
                     transferService.transferFile(codeUnit.getOriginal().toPath(), transferTo);
                 } catch (IOException e) {
-                    log.error("Unable to transfer file chatId: " + user.getChatId() + " block: " + block.inEnglish());
+                    log.error("Unable to copy not fabric file chatId: " + user.getChatId() + " block: " + block.inEnglish());
                     throw new BlockRegistrationException();
                 }
             }
