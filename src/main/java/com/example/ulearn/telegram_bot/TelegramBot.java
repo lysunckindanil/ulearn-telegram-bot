@@ -7,8 +7,10 @@ import com.example.ulearn.telegram_bot.model.User;
 import com.example.ulearn.telegram_bot.model.repo.UserRepository;
 import com.example.ulearn.telegram_bot.service.PaymentService;
 import com.example.ulearn.telegram_bot.service.UserService;
+import com.example.ulearn.telegram_bot.service.files.BlockRegistrationException;
 import com.vdurmont.emoji.EmojiParser;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
@@ -23,9 +25,12 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.StringJoiner;
+import java.util.regex.Pattern;
 
 import static com.example.ulearn.telegram_bot.service.source.Resources.*;
 import static com.example.ulearn.telegram_bot.service.tools.SendMessageTools.sendMessage;
@@ -60,9 +65,14 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     @Override
     public void onUpdateReceived(Update update) {
-        if (update.hasMessage() && update.getMessage().hasText()) {
+        // checks whether there is call back data
+        if (update.hasCallbackQuery()) ifCallbackQueryGot(update.getCallbackQuery());
+            // if there's not then handle text from message
+        else if (update.hasMessage() && update.getMessage().hasText()) {
             String messageText = update.getMessage().getText();
             long chatId = update.getMessage().getChatId();
+            // if chatId equals admin's one then checks whether some of admin's methods was executed
+            // if it was then all below are skipped, otherwise admin had wanted something else and code below will be handled
             if (chatId == userService.ADMIN_CHATID) {
                 if (adminCommandReceived(messageText)) return;
             }
@@ -85,8 +95,8 @@ public class TelegramBot extends TelegramLongPollingBot {
                     sendMessage(this, chatId, text);
                 }
             }
+        }
 
-        } else if (update.hasCallbackQuery()) ifCallbackQueryGot(update.getCallbackQuery());
     }
 
     private void ifCallbackQueryGot(CallbackQuery callbackQuery) {
@@ -94,16 +104,20 @@ public class TelegramBot extends TelegramLongPollingBot {
         Message message = callbackQuery.getMessage();
         long chatId = message.getChatId();
         EditMessageText editMessageText = new EditMessageText();
-        // here two conditions below (BUY_ALL and BUY_ONE) for send user for payment action
-        if (callBackData.equals(BUY_ALL)) {
+
+        // bot redirects user to payment action
+        if (callBackData.equals(BUY_ALL))
             paymentService.proceedPayment(this, chatId, null, message);
-        } else if (callBackData.equals(BUY_ONE)) {
-            // here bot sends user block choosing form in order to know which block the client wants to buy
+
+            // here bot redirects user to block choosing form in order to know which block the client wants to buy
+        else if (callBackData.equals(BUY_ONE)) {
             editMessageText.setText("Теперь, пожалуйста, выберите блок, который хотите купить");
-            editMessageText.setReplyMarkup(getBlockChoosingMenu());
+            editMessageText.setReplyMarkup(getBlockChoosingMenu(userService.getBlocks().subList(1, userService.getBlocks().size())));
             sendMessage(this, editMessageText, message);
-        } else if (callBackData.startsWith("block")) {
-            // here callBackData from block choosing form
+        }
+
+        // here callBackData from block choosing form and redirects to payment action
+        else if (callBackData.startsWith("block")) {
             if (userRepository.findById(chatId).get().getBlocks().stream().map(Block::inEnglish).anyMatch(x -> x.equals(callBackData))) {
                 editMessageText.setText(EmojiParser.parseToUnicode("У вас уже куплен этот блок :face_with_monocle:"));
                 sendMessage(this, editMessageText, message);
@@ -111,7 +125,10 @@ public class TelegramBot extends TelegramLongPollingBot {
                 Block block = userService.getBlocks().stream().filter(x -> x.inEnglish().equals(callBackData)).findFirst().get();
                 paymentService.proceedPayment(this, chatId, block, message);
             }
-        } else if (callBackData.startsWith("get")) {
+        }
+
+        // here call back data from show user files, sends user files to user by block
+        else if (callBackData.startsWith("get")) {
             // callBack on /show -> get any block command
             // finds the block by get+block regex
             Block blockToGet = userService.getBlocks().stream().filter(x -> ("get" + x.inEnglish()).equals(callBackData)).findFirst().get();
@@ -122,36 +139,84 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private boolean adminCommandReceived(String messageText) {
-        // here admin commands
-        var commands = messageText.split(" ");
-        var users = (List<User>) userRepository.findAll();
-        var chatIds = users.stream().map(User::getChatId).toList();
-
         /* returns true if any condition was passed in order to know whether admin wanted
            to use his commands or not */
-        if (messageText.contains("/send") && commands.length > 1) {
-            // send text message to all the users in database
+
+        // sends text message to all users
+        if (Pattern.matches("/send [\\s\\S]*", messageText)) {
+            var users = (List<User>) userRepository.findAll();
+            var message = messageText.substring(messageText.indexOf(" "));
             for (User user : users) {
-                sendMessage(this, user.getChatId(), messageText.substring(messageText.indexOf(" ")));
+                sendMessage(this, user.getChatId(), message);
+            }
+            sendMessage(this, userService.ADMIN_CHATID, "Message was successfully sent to everybody");
+            return true;
+        }
+
+        // registers only one block to user
+        else if (Pattern.matches("/register \\d{9} block\\d*", messageText)) {
+            var commands = messageText.split(" ");
+            var block = userService.getBlocks().stream().filter(x -> x.inEnglish().equals(commands[2])).findFirst();
+            var user = userRepository.findById(Long.parseLong(commands[1]));
+            // check whether user or block exists or not
+            if (block.isEmpty()) {
+                sendMessage(this, userService.ADMIN_CHATID, "Block doesn't exist");
+                return true;
+            }
+            if (user.isEmpty()) {
+                sendMessage(this, userService.ADMIN_CHATID, "User doesn't exist in database");
+                return true;
+            }
+            try {
+                userService.registerBlocks(user.get(), block.get());
+                sendMessage(this, userService.ADMIN_CHATID, block.get().inEnglish() + " is registered to the user");
+            } catch (BlockRegistrationException e) {
+                sendMessage(this, userService.ADMIN_CHATID, "Unable to register block to the user");
             }
             return true;
-        } else if (messageText.contains("/register") && commands[1].chars().allMatch(Character::isDigit) && chatIds.contains(Long.parseLong(commands[1])) && commands.length == 3) {
-            // gives any user block by pattern /register chat_id block
-            if (userService.getBlocks().stream().map(Block::inEnglish).anyMatch(commands[2]::equals)) {
-                long chatId = Long.parseLong(commands[1]);
-                Block block = userService.getBlocks().stream().filter(x -> x.inEnglish().equals(commands[2])).findFirst().get();
-                User user = userRepository.findById(chatId).get();
-                userService.registerBlocks(user, block);
-                sendMessage(this, userService.ADMIN_CHATID, block + " is registered");
-            }
-            return true;
-        } else if (messageText.contains("/registerAll") && commands[1].chars().allMatch(Character::isDigit) && chatIds.contains(Long.parseLong(commands[1])) && commands.length == 2) {
+        }
+
+        // registers all blocks to user
+        else if (Pattern.matches("/register \\d{9}", messageText)) {
             // gives user any block by pattern /registerAll chat_id
-            long chatId = Long.parseLong(commands[1]);
-            User user = userRepository.findById(chatId).get();
-            userService.registerBlocks(user, userService.getBlocks());
-            sendMessage(this, userService.ADMIN_CHATID, "All blocks are registered");
-            log.info("Admin: all blocks registered chat_id " + chatId);
+            var commands = messageText.split(" ");
+            Optional<User> user = userRepository.findById(Long.parseLong(commands[1]));
+            if (user.isPresent()) {
+                try {
+                    userService.registerBlocks(user.get(), userService.getBlocks());
+                    sendMessage(this, userService.ADMIN_CHATID, "All blocks are registered to the user");
+                } catch (BlockRegistrationException e) {
+                    sendMessage(this, userService.ADMIN_CHATID, "Unable to register blocks to the user");
+                }
+            } else {
+                sendMessage(this, userService.ADMIN_CHATID, "User doesn't exists in database");
+            }
+            return true;
+        }
+
+        // clears user folder and deletes block from database, usually to be used if something went wrong
+        else if (Pattern.matches("/clear \\d{9}", messageText)) {
+            var chatId = Long.parseLong(messageText.split(" ")[1]);
+            var userDir = new File(USERS_CODE_FILES + File.separator + chatId);
+            Optional<User> userOpt = userRepository.findById(chatId);
+            if (userOpt.isPresent()) {
+                User user = userOpt.get();
+                user.setBlocks(new ArrayList<>());
+                userRepository.save(user);
+                sendMessage(this, userService.ADMIN_CHATID, "User blocks successfully deleted");
+                if (userDir.exists()) {
+                    try {
+                        FileUtils.cleanDirectory(userDir);
+                        sendMessage(this, userService.ADMIN_CHATID, "User directory was successfully cleaned");
+                    } catch (IOException e) {
+                        sendMessage(this, userService.ADMIN_CHATID, "Unable to clean user folder");
+                    }
+                } else {
+                    sendMessage(this, userService.ADMIN_CHATID, "User directory doesn't exist");
+                }
+            } else {
+                sendMessage(this, userService.ADMIN_CHATID, "User doesn't exist");
+            }
             return true;
         }
         return false;
@@ -164,7 +229,11 @@ public class TelegramBot extends TelegramLongPollingBot {
             user.setChatId(message.getChatId());
             user.setUserName(message.getChat().getUserName());
             // block1 with questions by default, new block because equals based on number
-            userService.registerBlocks(user, new Block(1));
+            try {
+                userService.registerBlocks(user, new Block(1));
+            } catch (BlockRegistrationException e) {
+                sendMessage(this, user.getChatId(), "Не получилось получить контрольные вопросы первого блок. Напишите, пожалуйста, в поддержку!");
+            }
             userRepository.save(user);
         }
     }
@@ -199,7 +268,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         // if its empty sends only questions
         List<File> files = userService.getUserFilesByBlock(chatId, block);
         if (!files.isEmpty()) {
-            sendMessage(this, chatId, "Ваши практики " + block.inRussian() + "а:");
+            sendMessage(this, chatId, "Ваши практики и задания " + block.inRussian() + "а:");
             for (File file : files)
                 sendMessage(this, chatId, file);
         }

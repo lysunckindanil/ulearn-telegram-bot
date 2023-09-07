@@ -7,6 +7,7 @@ import com.example.ulearn.telegram_bot.model.Payment;
 import com.example.ulearn.telegram_bot.model.User;
 import com.example.ulearn.telegram_bot.model.repo.PaymentRepository;
 import com.example.ulearn.telegram_bot.model.repo.UserRepository;
+import com.example.ulearn.telegram_bot.service.files.BlockRegistrationException;
 import com.vdurmont.emoji.EmojiParser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -117,7 +118,7 @@ public class PaymentService {
             try {
                 textToUserResponse = handleResponse(payment, block);
                 payment.setStatus("completed");
-            } catch (RuntimeException e) {
+            } catch (BlockRegistrationException e) {
                 payment.setStatus("error");
                 log.error("Payment error: " + payment);
                 textToUserResponse = "Просим прощения, произошла непредвиденная ошибка при покупке блоков. Обратитесь, пожалуйста, в поддержку /help!";
@@ -167,7 +168,7 @@ public class PaymentService {
                     try {
                         textToUserResponse = handleResponse(payment, block);
                         payment.setStatus("completed with restore");
-                    } catch (RuntimeException e) {
+                    } catch (BlockRegistrationException e) {
                         payment.setStatus("error");
                         log.error("Payment error: " + payment);
                         textToUserResponse = "Просим прощение, произошла непредвиденная ошибка при покупке блоков. Обратитесь, пожалуйста, в поддержку /help!";
@@ -184,7 +185,7 @@ public class PaymentService {
         }
     }
 
-    private String handleResponse(Payment payment, Block block) {
+    private String handleResponse(Payment payment, Block block) throws BlockRegistrationException {
         String id = payment.getId();
         int numberOfOrder = payment.getNumber_of_order();
         long chatId = payment.getChatId();

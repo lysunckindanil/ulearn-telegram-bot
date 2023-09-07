@@ -6,6 +6,7 @@ import com.example.ulearn.telegram_bot.model.CodeUnit;
 import com.example.ulearn.telegram_bot.model.User;
 import com.example.ulearn.telegram_bot.model.repo.BlockRepository;
 import com.example.ulearn.telegram_bot.model.repo.UserRepository;
+import com.example.ulearn.telegram_bot.service.files.BlockRegistrationException;
 import com.example.ulearn.telegram_bot.service.files.TransferService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -68,7 +69,7 @@ public class UserService {
 
     // registration blocks to users
 
-    public void registerBlocks(User user, List<Block> blocksToAdd) {
+    public void registerBlocks(User user, List<Block> blocksToAdd) throws BlockRegistrationException {
         // add all blocks user doesn't have to database and resources
         List<Block> userBlocks = user.getBlocks();
         for (Block block : blocksToAdd) {
@@ -76,9 +77,9 @@ public class UserService {
                 try {
                     register(user, block);
                     log.info("Registered " + block.inEnglish() + " chatId: " + user.getChatId());
-                } catch (RuntimeException e) {
+                } catch (BlockRegistrationException e) {
                     log.error("Unable to register " + block.inEnglish() + " chatId: " + user.getChatId());
-                    throw new RuntimeException(e);
+                    throw new BlockRegistrationException();
                 }
             } else {
                 log.warn(block + " is yet registered to the user");
@@ -87,11 +88,11 @@ public class UserService {
         userRepository.save(user);
     }
 
-    public void registerBlocks(User user, Block blockToAdd) {
+    public void registerBlocks(User user, Block blockToAdd) throws BlockRegistrationException {
         registerBlocks(user, List.of(blockToAdd));
     }
 
-    private void register(User user, Block block) {
+    private void register(User user, Block block) throws BlockRegistrationException {
         Path transferTo = Path.of(USERS_CODE_FILES + File.separator + user.getChatId());
         if (!Files.exists(transferTo)) {
             try {
@@ -113,7 +114,7 @@ public class UserService {
                     transferService.transferFabricFile(original, pattern, destination, transferTo);
                 } catch (IOException e) {
                     log.error("Unable to transfer fabric file chatId: " + user.getChatId() + " block: " + block.inEnglish());
-                    throw new RuntimeException();
+                    throw new BlockRegistrationException();
                 }
             } else {
                 try {
@@ -121,12 +122,11 @@ public class UserService {
                     transferService.transferFile(codeUnit.getOriginal().toPath(), transferTo);
                 } catch (IOException e) {
                     log.error("Unable to transfer file chatId: " + user.getChatId() + " block: " + block.inEnglish());
-                    throw new RuntimeException();
+                    throw new BlockRegistrationException();
                 }
             }
         }
         user.addBlock(block);
-
     }
 
 }
