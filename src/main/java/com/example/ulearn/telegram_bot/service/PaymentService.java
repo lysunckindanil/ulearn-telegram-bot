@@ -1,13 +1,13 @@
 package com.example.ulearn.telegram_bot.service;
 
 import com.example.ulearn.telegram_bot.TelegramBot;
+import com.example.ulearn.telegram_bot.exceptions.BlockRegistrationException;
 import com.example.ulearn.telegram_bot.model.Block;
 import com.example.ulearn.telegram_bot.model.CodeUnit;
 import com.example.ulearn.telegram_bot.model.Payment;
 import com.example.ulearn.telegram_bot.model.User;
 import com.example.ulearn.telegram_bot.model.repo.PaymentRepository;
 import com.example.ulearn.telegram_bot.model.repo.UserRepository;
-import com.example.ulearn.telegram_bot.exceptions.BlockRegistrationException;
 import com.vdurmont.emoji.EmojiParser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +27,7 @@ import static com.example.ulearn.telegram_bot.tools.SerializationTools.deseriali
 import static com.example.ulearn.telegram_bot.tools.SerializationTools.serializeToString;
 import static com.example.ulearn.telegram_bot.tools.ServerTools.sendJson;
 
-@SuppressWarnings({"OptionalGetWithoutIsPresent", "DuplicatedCode", "SpringPropertySource"})
+@SuppressWarnings({"DuplicatedCode", "SpringPropertySource"})
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -162,7 +162,7 @@ public class PaymentService {
                     EditMessageText editMessageText = new EditMessageText();
                     Block block;
                     if (!payment.getBlocks().isEmpty())
-                        block = userService.getBlocks().stream().filter(x -> x.inEnglish().equals(payment.getBlocks())).findFirst().get();
+                        block = userService.getBlocks().stream().filter(x -> x.inEnglish().equals(payment.getBlocks())).findFirst().orElse(null);
                     else block = null;
                     String textToUserResponse;
                     try {
@@ -193,16 +193,18 @@ public class PaymentService {
         int response = checkPaymentStatusLoop(id, SERVER_URL, LIMIT);
         if (response == 1) {
             // if successful it registers blocks to user
-            User user = userRepository.findById(payment.getChatId()).get();
-            if (block == null) {
-                userService.registerBlocks(user, userService.getBlocks());
-                log.info("ChatId " + chatId + " bought block payment_id " + id);
-                return EmojiParser.parseToUnicode("Заказ " + numberOfOrder + " оплачен :white_check_mark:\n" + "Поздравляю! Вы купили практики всех блоков :sunglasses: \nЧтобы их получить, перейдите в /show");
+            if (userRepository.findById(payment.getChatId()).isPresent()) {
+                User user = userRepository.findById(payment.getChatId()).get();
+                if (block == null) {
+                    userService.registerBlocks(user, userService.getBlocks());
+                    log.info("ChatId " + chatId + " bought block payment_id " + id);
+                    return EmojiParser.parseToUnicode("Заказ " + numberOfOrder + " оплачен :white_check_mark:\n" + "Поздравляю! Вы купили практики всех блоков :sunglasses: \nЧтобы их получить, перейдите в /show");
 
-            } else {
-                userService.registerBlocks(user, block);
-                log.info("ChatId " + chatId + " bought blocks payment_id " + id);
-                return EmojiParser.parseToUnicode("Заказ " + numberOfOrder + " оплачен :white_check_mark:\n" + "Поздравляю! Вы купили практики " + block.inRussian() + "а :sunglasses: \nЧтобы их получить, перейдите в /show");
+                } else {
+                    userService.registerBlocks(user, block);
+                    log.info("ChatId " + chatId + " bought blocks payment_id " + id);
+                    return EmojiParser.parseToUnicode("Заказ " + numberOfOrder + " оплачен :white_check_mark:\n" + "Поздравляю! Вы купили практики " + block.inRussian() + "а :sunglasses: \nЧтобы их получить, перейдите в /show");
+                }
             }
         } else if (response == -1) {
             log.info("ChatId " + chatId + " cancelled payment payment_id " + id);
@@ -234,7 +236,7 @@ public class PaymentService {
     }
 
 
-    // static data
+    // templates
 
     private String getOneBlockDescriptionPaymentText(Block block) {
         StringJoiner joiner = new StringJoiner("\n");
