@@ -1,10 +1,11 @@
-package com.example.ulearn.telegram_bot.service.bot_tools;
+package com.example.ulearn.telegram_bot.tools;
 
 import lombok.extern.slf4j.Slf4j;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
 import org.telegram.telegrambots.meta.api.methods.send.SendMediaGroup;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.send.SendVideo;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Message;
@@ -19,7 +20,9 @@ import java.util.List;
 
 @Slf4j
 public class SendMessageTools {
-
+    /**
+     * Send text message
+     */
     public static void sendMessage(TelegramLongPollingBot bot, long chatId, String text) {
         SendMessage message = new SendMessage();
         message.setChatId(String.valueOf(chatId));
@@ -31,6 +34,10 @@ public class SendMessageTools {
         }
     }
 
+
+    /**
+     * Send text message with InlineKeyboardMarkup
+     */
     public static void sendMessage(TelegramLongPollingBot bot, long chatId, String text, InlineKeyboardMarkup inlineKeyboardMarkup) {
         SendMessage message = new SendMessage();
         message.setChatId(String.valueOf(chatId));
@@ -43,6 +50,10 @@ public class SendMessageTools {
         }
     }
 
+
+    /**
+     * Send text message with File
+     */
     public static void sendMessage(TelegramLongPollingBot bot, long chatId, File file) {
         SendDocument message = new SendDocument();
         message.setChatId(String.valueOf(chatId));
@@ -54,6 +65,10 @@ public class SendMessageTools {
         }
     }
 
+
+    /**
+     * Send EditTextMessage
+     */
     public static void sendMessage(TelegramLongPollingBot bot, EditMessageText editMessageText, Message message) {
         int messageId = message.getMessageId();
         long chatId = message.getChatId();
@@ -66,6 +81,10 @@ public class SendMessageTools {
         }
     }
 
+
+    /**
+     * Send text message with MediaGroup
+     */
     public static void sendMessage(TelegramLongPollingBot bot, long chatId, List<File> files, String caption) {
         SendMediaGroup mediaGroup = new SendMediaGroup();
         mediaGroup.setChatId(String.valueOf(chatId));
@@ -83,5 +102,15 @@ public class SendMessageTools {
             log.error("Unable to send media group message");
         }
     }
+
+    public static void sendMessage(TelegramLongPollingBot bot, long chatId, InputFile videoFile) {
+        SendVideo sendVideo = new SendVideo(String.valueOf(chatId), videoFile);
+        try {
+            bot.execute(sendVideo);
+        } catch (TelegramApiException e) {
+            log.error("Unable to send video message");
+        }
+    }
+
 }
 

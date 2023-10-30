@@ -1,6 +1,7 @@
 package com.example.ulearn.telegram_bot.config;
 
-import com.example.ulearn.telegram_bot.service.TelegramBot;
+//import com.example.ulearn.telegram_bot.TelegramBot;
+import com.example.ulearn.telegram_bot.TelegramBot;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
